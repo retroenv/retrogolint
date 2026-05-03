@@ -119,19 +119,7 @@ func LoadFileConfig(path string) (FileConfig, error) {
 		return FileConfig{}, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	fileCfg := DefaultFileConfig()
-	normalized := normalizeConfigData(data)
-	parsed, err := config.LoadConfigBytes(normalized)
-	if err != nil {
-		return FileConfig{}, fmt.Errorf("failed to parse config file %s: %w", path, err)
-	}
-	if err := parsed.Unmarshal(&fileCfg); err != nil {
-		return FileConfig{}, fmt.Errorf("failed to read config file %s: %w", path, err)
-	}
-
-	fileCfg.RuleExclusions = extractRuleExclusions(data)
-
-	return fileCfg, nil
+	return loadFileConfigBytes(data, path)
 }
 
 // ApplyFileConfig applies file-based configuration values to the runtime config.
@@ -171,6 +159,22 @@ func ApplyFileConfig(cfg *Config, fileCfg FileConfig) error {
 	}
 
 	return nil
+}
+
+func loadFileConfigBytes(data []byte, source string) (FileConfig, error) {
+	fileCfg := DefaultFileConfig()
+	normalized := normalizeConfigData(data)
+	parsed, err := config.LoadConfigBytes(normalized)
+	if err != nil {
+		return FileConfig{}, fmt.Errorf("failed to parse config file %s: %w", source, err)
+	}
+	if err := parsed.Unmarshal(&fileCfg); err != nil {
+		return FileConfig{}, fmt.Errorf("failed to read config file %s: %w", source, err)
+	}
+
+	fileCfg.RuleExclusions = extractRuleExclusions(data)
+
+	return fileCfg, nil
 }
 
 func normalizeConfigData(data []byte) []byte {

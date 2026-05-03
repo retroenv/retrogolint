@@ -51,9 +51,6 @@ exclude_files = *_gen.go
 }
 
 func TestLoadFileConfig_PerRuleExclusions(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "retrogolint.ini")
-
 	content := `[rule.logging-capitalization]
 exclude-files = assert/*_test.go
 exclude-dirs = generated
@@ -63,10 +60,7 @@ exclude-tests = true
 exclude_files = legacy_*.go
 `
 
-	err := os.WriteFile(path, []byte(content), 0644)
-	assert.NoError(t, err)
-
-	fileCfg, err := LoadFileConfig(path)
+	fileCfg, err := loadFileConfigBytes([]byte(content), "testdata")
 	assert.NoError(t, err)
 
 	ruleFileCfg := fileCfg.RuleExclusions["logging-capitalization"]
