@@ -79,7 +79,7 @@ type optionFlags struct {
 	MaxPerRule    int    `flag:"max-per-rule" usage:"Maximum violations per rule (0 = unlimited)"`
 	ExcludeTests  bool   `flag:"exclude-tests" usage:"Exclude test files from analysis"`
 	ExcludeDirs   string `flag:"exclude-dirs" usage:"Comma-separated list of directories to exclude"`
-	ExcludeFiles  string `flag:"exclude-files" usage:"Comma-separated list of file patterns to exclude"`
+	ExcludeFiles  string `flag:"exclude-files" usage:"Comma-separated list of filename or relative path patterns to exclude"`
 	Version       bool   `flag:"version" usage:"Show version information"`
 }
 

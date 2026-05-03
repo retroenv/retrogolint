@@ -14,7 +14,7 @@
 | `-max-per-rule` | `0` | Maximum violations per rule; `0` means unlimited |
 | `-exclude-tests` | `false` | Exclude `_test.go` files |
 | `-exclude-dirs` | none | Comma-separated directory names to exclude |
-| `-exclude-files` | none | Comma-separated filename patterns to exclude |
+| `-exclude-files` | none | Comma-separated filename or relative path patterns to exclude |
 | `-version` | `false` | Print version information |
 
 ## File Example
@@ -27,7 +27,7 @@ disabled-rules = logging-efficiency
 max-per-rule = 10
 exclude-tests = true
 exclude-dirs = vendor,testdata
-exclude-files = *_generated.go
+exclude-files = *_generated.go,assert/*_test.go
 ```
 
 Notes:
@@ -36,6 +36,7 @@ Notes:
 - Lines starting with `#` or `;` are comments.
 - Empty `rules` means all rules are enabled.
 - Unknown rule names or categories in `rules` and `disabled-rules` are reported as errors.
+- `exclude-files` matches basenames for patterns without `/`, and relative path suffixes for patterns with `/`.
 
 ## Per-Rule Exclusions
 
@@ -50,7 +51,7 @@ exclude-dirs = testdata
 exclude-tests = true
 
 [rule.logging]
-exclude-files = legacy_*.go
+exclude-files = legacy_*.go,assert/*_test.go
 ```
 
 Rule-level sections apply to one rule. Category sections, such as `[rule.logging]`, apply to every rule in that category.

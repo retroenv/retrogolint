@@ -1,6 +1,7 @@
 package linterconfig
 
 import (
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -22,22 +23,21 @@ type RuleFileConfig struct {
 }
 
 // ShouldExcludeFile checks if a file should be excluded based on exclusion settings.
-func (re *RuleExclusions) ShouldExcludeFile(path string) bool {
-	if re.ExcludeTests && strings.HasSuffix(path, "_test.go") {
+func (re *RuleExclusions) ShouldExcludeFile(filePath string) bool {
+	if re.ExcludeTests && strings.HasSuffix(filePath, "_test.go") {
 		return true
 	}
 
 	for _, dir := range re.ExcludeDirs {
-		if strings.Contains(path, string(filepath.Separator)+dir+string(filepath.Separator)) ||
-			strings.HasPrefix(path, dir+string(filepath.Separator)) {
+		if strings.Contains(filePath, string(filepath.Separator)+dir+string(filepath.Separator)) ||
+			strings.HasPrefix(filePath, dir+string(filepath.Separator)) {
 
 			return true
 		}
 	}
 
 	for _, pattern := range re.ExcludeFiles {
-		matched, err := filepath.Match(pattern, filepath.Base(path))
-		if err == nil && matched {
+		if filePatternMatches(pattern, filePath) {
 			return true
 		}
 	}
@@ -60,6 +60,44 @@ func ParseRules(s string) []string {
 		}
 	}
 	return rules
+}
+
+func filePatternMatches(pattern, filePath string) bool {
+	pattern = filepath.ToSlash(pattern)
+	filePath = filepath.ToSlash(filePath)
+
+	if !strings.Contains(pattern, "/") {
+		matched, err := path.Match(pattern, path.Base(filePath))
+		return err == nil && matched
+	}
+
+	pattern = path.Clean(pattern)
+	filePath = path.Clean(filePath)
+	for {
+		matched, err := path.Match(pattern, filePath)
+		if err == nil && matched {
+			return true
+		}
+
+		trimmed := strings.TrimPrefix(filePath, "/")
+		if trimmed == filePath {
+			break
+		}
+		filePath = trimmed
+	}
+
+	for {
+		idx := strings.IndexByte(filePath, '/')
+		if idx == -1 {
+			return false
+		}
+		filePath = filePath[idx+1:]
+
+		matched, err := path.Match(pattern, filePath)
+		if err == nil && matched {
+			return true
+		}
+	}
 }
 
 // extractRuleExclusions parses [rule.*] sections from INI data and returns per-rule exclusions.

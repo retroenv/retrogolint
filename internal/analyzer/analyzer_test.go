@@ -170,6 +170,30 @@ func TestAnalyzer_ShouldExcludeFile(t *testing.T) {
 			path: "pkg/file.go",
 			want: false,
 		},
+		{
+			name: "exclude file by path pattern (relative)",
+			config: &linterconfig.Config{
+				RuleExclusions: linterconfig.RuleExclusions{ExcludeFiles: []string{"assert/assert_test.go"}},
+			},
+			path: "assert/assert_test.go",
+			want: true,
+		},
+		{
+			name: "exclude file by path pattern (absolute)",
+			config: &linterconfig.Config{
+				RuleExclusions: linterconfig.RuleExclusions{ExcludeFiles: []string{"assert/assert_test.go"}},
+			},
+			path: "/home/user/go/src/github.com/retroenv/retrogolib/assert/assert_test.go",
+			want: true,
+		},
+		{
+			name: "no match for different subdir with path pattern",
+			config: &linterconfig.Config{
+				RuleExclusions: linterconfig.RuleExclusions{ExcludeFiles: []string{"assert/assert_test.go"}},
+			},
+			path: "other/assert_test.go",
+			want: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -251,4 +275,38 @@ func TestAnalyzer_FilterViolations_DeterministicBeforeLimit(t *testing.T) {
 	assert.Len(t, filtered, 1)
 	assert.Equal(t, "a.go", filtered[0].Position.Filename)
 	assert.Equal(t, 5, filtered[0].Position.Line)
+}
+
+func TestAnalyzer_FilterByRuleExclusions(t *testing.T) {
+	violations := []violation.Violation{
+		{
+			Rule:     "logging-capitalization",
+			Position: token.Position{Filename: "/repo/assert/assert_test.go"},
+		},
+		{
+			Rule:     "logging-field-casing",
+			Position: token.Position{Filename: "/repo/internal/logging.go"},
+		},
+		{
+			Rule:     "logging-efficiency",
+			Position: token.Position{Filename: "/repo/internal/other.go"},
+		},
+	}
+
+	cfg := linterconfig.DefaultConfig()
+	cfg.PerRuleExclusions = map[string]*linterconfig.RuleExclusions{
+		"logging-capitalization": {
+			ExcludeFiles: []string{"assert/*_test.go"},
+		},
+		"logging": {
+			ExcludeFiles: []string{"internal/logging.go"},
+		},
+	}
+	registry := rules.NewRegistry()
+	a := New(cfg, registry)
+
+	filtered := a.filterByRuleExclusions(violations)
+
+	assert.Len(t, filtered, 1)
+	assert.Equal(t, "logging-efficiency", filtered[0].Rule)
 }

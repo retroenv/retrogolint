@@ -27,6 +27,22 @@ func TestApplyFlagOverrides_DisabledRules(t *testing.T) {
 	assert.Equal(t, []string{"logging", "collections-map-set"}, cfg.DisabledRules)
 }
 
+func TestApplyFlagOverrides_Exclusions(t *testing.T) {
+	cfg := linterconfig.DefaultConfig()
+	setFlags := set.New[string]()
+	setFlags.Add("exclude-dirs")
+	setFlags.Add("exclude-files")
+
+	err := applyFlagOverrides(cfg, setFlags, optionFlags{
+		ExcludeDirs:  "vendor,generated",
+		ExcludeFiles: "assert/*_test.go,*_gen.go",
+	}, outputFlags{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"vendor", "generated"}, cfg.ExcludeDirs)
+	assert.Equal(t, []string{"assert/*_test.go", "*_gen.go"}, cfg.ExcludeFiles)
+}
+
 func TestApplyFlagOverrides_InvalidFormat(t *testing.T) {
 	cfg := linterconfig.DefaultConfig()
 	setFlags := set.New[string]()

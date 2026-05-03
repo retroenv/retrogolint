@@ -44,7 +44,7 @@ See [docs/rules.md](docs/rules.md) for the complete rule list.
 - Analyze files, directories, and Go package patterns such as `./...`
 - Select rules by exact rule name or by category
 - Filter reported violations by minimum severity
-- Exclude test files, directories, and filename patterns
+- Exclude test files, directories, and filename or relative path patterns
 
 ### Configuration
 
@@ -123,7 +123,7 @@ Options:
   -exclude-dirs string
         Comma-separated list of directories to exclude
   -exclude-files string
-        Comma-separated list of file patterns to exclude
+        Comma-separated list of filename or relative path patterns to exclude
   -version
         Show version information
 

@@ -50,6 +50,48 @@ exclude_files = *_gen.go
 	assert.Equal(t, []string{"*_gen.go"}, cfg.ExcludeFiles)
 }
 
+func TestLoadFileConfig_PerRuleExclusions(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "retrogolint.ini")
+
+	content := `[rule.logging-capitalization]
+exclude-files = assert/*_test.go
+exclude-dirs = generated
+
+[rule.logging]
+exclude-tests = true
+exclude_files = legacy_*.go
+`
+
+	err := os.WriteFile(path, []byte(content), 0644)
+	assert.NoError(t, err)
+
+	fileCfg, err := LoadFileConfig(path)
+	assert.NoError(t, err)
+
+	ruleFileCfg := fileCfg.RuleExclusions["logging-capitalization"]
+	assert.Equal(t, "assert/*_test.go", ruleFileCfg.ExcludeFiles)
+	assert.Equal(t, "generated", ruleFileCfg.ExcludeDirs)
+
+	categoryFileCfg := fileCfg.RuleExclusions["logging"]
+	assert.True(t, categoryFileCfg.ExcludeTests)
+	assert.Equal(t, "legacy_*.go", categoryFileCfg.ExcludeFiles)
+
+	cfg := DefaultConfig()
+	err = ApplyFileConfig(cfg, fileCfg)
+	assert.NoError(t, err)
+
+	ruleExcl := cfg.PerRuleExclusions["logging-capitalization"]
+	assert.NotNil(t, ruleExcl)
+	assert.Equal(t, []string{"assert/*_test.go"}, ruleExcl.ExcludeFiles)
+	assert.Equal(t, []string{"generated"}, ruleExcl.ExcludeDirs)
+
+	categoryExcl := cfg.PerRuleExclusions["logging"]
+	assert.NotNil(t, categoryExcl)
+	assert.True(t, categoryExcl.ExcludeTests)
+	assert.Equal(t, []string{"legacy_*.go"}, categoryExcl.ExcludeFiles)
+}
+
 func TestApplyFileConfig_InvalidFormat(t *testing.T) {
 	cfg := DefaultConfig()
 	fileCfg := DefaultFileConfig()
