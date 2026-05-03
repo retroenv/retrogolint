@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"unicode"
 
+	"github.com/retroenv/retrogolib/set"
 	"github.com/retroenv/retrogolint/internal/rules/api"
 	"github.com/retroenv/retrogolint/internal/violation"
 )
@@ -26,7 +27,7 @@ func (r *FuncOrderRule) Name() string {
 
 // Description returns the rule description.
 func (r *FuncOrderRule) Description() string {
-	return "Declarations should be ordered: exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions"
+	return "Declarations should be ordered: exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions. Exception: unexported type dependencies may appear directly before an exported type when that type uses them."
 }
 
 // Severity returns the default severity.
@@ -65,6 +66,10 @@ func (r *FuncOrderRule) Check(fset *token.FileSet, file *ast.File) []violation.V
 		current := decls[i]
 		previous := decls[i-1]
 
+		if r.isAllowedDependencyTypePair(previous, current, decls) {
+			continue
+		}
+
 		if current.category < previous.category {
 			pos := fset.Position(current.pos)
 			violations = append(violations, violation.Violation{
@@ -76,6 +81,40 @@ func (r *FuncOrderRule) Check(fset *token.FileSet, file *ast.File) []violation.V
 		}
 	}
 
+	violations = append(violations, r.checkDependencyOrdering(fset, decls)...)
+	return violations
+}
+
+func (r *FuncOrderRule) checkDependencyOrdering(fset *token.FileSet, decls []declInfo) []violation.Violation {
+	typeDeclByName := make(map[string]declInfo, len(decls))
+	for _, decl := range decls {
+		if decl.typ == nil {
+			continue
+		}
+		typeDeclByName[decl.name] = decl
+	}
+
+	var violations []violation.Violation
+	for _, decl := range decls {
+		if decl.category != categoryExportedType || decl.typ == nil {
+			continue
+		}
+		for _, depName := range referencedTypeNames(decl.typ.Type) {
+			depDecl, ok := typeDeclByName[depName]
+			if !ok || !isUnexportedType(depDecl.typ) {
+				continue
+			}
+			if depDecl.pos > decl.pos && r.exportedTypeUsesDependency(decl, depName, decls) {
+				pos := fset.Position(depDecl.pos)
+				violations = append(violations, violation.Violation{
+					Rule:     r.Name(),
+					Message:  "type dependency " + depName + " should be declared before exported type " + decl.name,
+					Position: pos,
+					Severity: r.Severity(),
+				})
+			}
+		}
+	}
 	return violations
 }
 
@@ -87,6 +126,7 @@ func (r *FuncOrderRule) categorizeFunc(funcDecl *ast.FuncDecl) (declInfo, bool) 
 	info := declInfo{
 		name: name,
 		pos:  funcDecl.Pos(),
+		fn:   funcDecl,
 	}
 
 	if isInitFunction(name, isMethod) {
@@ -134,6 +174,7 @@ func (r *FuncOrderRule) categorizeTypeDecl(genDecl *ast.GenDecl) (declInfo, bool
 	info := declInfo{
 		name: name,
 		pos:  genDecl.Pos(),
+		typ:  typeSpec,
 	}
 
 	if isExported(name) {
@@ -147,6 +188,40 @@ func (r *FuncOrderRule) categorizeTypeDecl(genDecl *ast.GenDecl) (declInfo, bool
 // formatMessage creates a descriptive message for the violation.
 func (r *FuncOrderRule) formatMessage(name string, current, previous funcCategory) string {
 	return name + " (" + current.String() + ") should come before " + previous.String()
+}
+
+func (r *FuncOrderRule) isAllowedDependencyTypePair(previous, current declInfo, decls []declInfo) bool {
+	if previous.category != categoryUnexportedType || current.category != categoryExportedType {
+		return false
+	}
+	if previous.typ == nil || current.typ == nil {
+		return false
+	}
+	if !isUnexportedType(previous.typ) {
+		return false
+	}
+	return r.exportedTypeUsesDependency(current, previous.name, decls)
+}
+
+func (r *FuncOrderRule) exportedTypeUsesDependency(exportedType declInfo, depName string, decls []declInfo) bool {
+	if exportedType.typ == nil || exportedType.category != categoryExportedType {
+		return false
+	}
+	if typeReferencesIdent(exportedType.typ.Type, depName) {
+		return true
+	}
+	for _, decl := range decls {
+		if decl.fn == nil || decl.fn.Recv == nil {
+			continue
+		}
+		if receiverTypeName(decl.fn.Recv) != exportedType.name {
+			continue
+		}
+		if functionSignatureReferencesIdent(decl.fn.Type, depName) {
+			return true
+		}
+	}
+	return false
 }
 
 // funcCategory represents the category of a function/method or type declaration.
@@ -169,6 +244,8 @@ type declInfo struct {
 	name     string
 	category funcCategory
 	pos      token.Pos
+	typ      *ast.TypeSpec
+	fn       *ast.FuncDecl
 }
 
 func (c funcCategory) String() string {
@@ -302,5 +379,89 @@ func isExportedReceiverType(expr ast.Expr) bool {
 		return isExportedReceiverType(t.X)
 	default:
 		return true
+	}
+}
+
+func isUnexportedType(typeSpec *ast.TypeSpec) bool {
+	if typeSpec == nil {
+		return false
+	}
+	return !isExported(typeSpec.Name.Name)
+}
+
+func typeReferencesIdent(expr ast.Expr, ident string) bool {
+	found := false
+	ast.Inspect(expr, func(node ast.Node) bool {
+		id, ok := node.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		if id.Name == ident {
+			found = true
+			return false
+		}
+		return true
+	})
+	return found
+}
+
+func referencedTypeNames(expr ast.Expr) []string {
+	seen := set.New[string]()
+	ast.Inspect(expr, func(node ast.Node) bool {
+		id, ok := node.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		if id.Name == "" {
+			return true
+		}
+		seen.Add(id.Name)
+		return true
+	})
+
+	return seen.ToSlice()
+}
+
+func functionSignatureReferencesIdent(fnType *ast.FuncType, ident string) bool {
+	if fnType == nil {
+		return false
+	}
+	if fieldListReferencesIdent(fnType.Params, ident) {
+		return true
+	}
+	return fieldListReferencesIdent(fnType.Results, ident)
+}
+
+func fieldListReferencesIdent(fields *ast.FieldList, ident string) bool {
+	if fields == nil {
+		return false
+	}
+	for _, field := range fields.List {
+		if typeReferencesIdent(field.Type, ident) {
+			return true
+		}
+	}
+	return false
+}
+
+func receiverTypeName(recv *ast.FieldList) string {
+	if recv == nil || len(recv.List) == 0 {
+		return ""
+	}
+	return baseTypeName(recv.List[0].Type)
+}
+
+func baseTypeName(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.StarExpr:
+		return baseTypeName(t.X)
+	case *ast.IndexExpr:
+		return baseTypeName(t.X)
+	case *ast.IndexListExpr:
+		return baseTypeName(t.X)
+	default:
+		return ""
 	}
 }

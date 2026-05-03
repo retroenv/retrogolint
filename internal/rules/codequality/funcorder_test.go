@@ -32,6 +32,70 @@ func helper() {}
 			wantViolations: 0,
 		},
 		{
+			name:     "unexported interface directly before exported type is allowed when used",
+			filename: "test.go",
+			code: `package test
+type serviceDep interface {
+	Run()
+}
+type Service struct{
+	dep serviceDep
+}
+func New() *Service { return nil }
+`,
+			wantViolations: 0,
+		},
+		{
+			name:     "unexported non-interface type directly before exported type is allowed when used",
+			filename: "test.go",
+			code: `package test
+type serviceDep func() bool
+type Service struct{
+	dep serviceDep
+}
+func New() *Service { return nil }
+`,
+			wantViolations: 0,
+		},
+		{
+			name:     "unexported interface directly before exported type is not allowed when unused",
+			filename: "test.go",
+			code: `package test
+type serviceDep interface {
+	Run()
+}
+type Service struct{}
+func New() *Service { return nil }
+`,
+			wantViolations: 1,
+		},
+		{
+			name:     "unexported interface used by exported type cannot be below it",
+			filename: "test.go",
+			code: `package test
+type Service struct{
+	dep serviceDep
+}
+type serviceDep interface {
+	Run()
+}
+func New() *Service { return nil }
+`,
+			wantViolations: 2,
+		},
+		{
+			name:     "unexported non-interface type used by exported type cannot be below it",
+			filename: "test.go",
+			code: `package test
+type Service struct{
+	dep serviceDep
+}
+type serviceDep func() bool
+func New() *Service { return nil }
+`,
+			wantViolations: 2,
+		},
+		{
 			name:     "type after function",
 			filename: "test.go",
 			code: `package test
@@ -134,5 +198,5 @@ func TestFuncOrderRule_Metadata(t *testing.T) {
 
 	assert.Equal(t, "codequality-funcorder", rule.Name())
 	assert.Equal(t, "codequality", rule.Category())
-	assert.Equal(t, "Declarations should be ordered: exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions", rule.Description())
+	assert.Equal(t, "Declarations should be ordered: exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions. Exception: unexported type dependencies may appear directly before an exported type when that type uses them.", rule.Description())
 }

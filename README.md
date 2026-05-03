@@ -36,6 +36,8 @@ It checks retrogolib-specific logging conventions, testing style, collection usa
 - **Collections**: Set-like `map[K]bool` and `map[K]struct{}` patterns that should use `retrogolib/set`
 - **Code quality**: Top-level declaration order, parameter priority, and exported type stutter
 
+`codequality-funcorder` also enforces that unexported dependency types are declared before the exported types that use them.
+
 See [docs/rules.md](docs/rules.md) for the complete rule list.
 
 ## Features

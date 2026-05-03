@@ -6,11 +6,24 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 
 | Rule | Severity | Checks |
 |------|----------|--------|
-| `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions |
+| `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
 | `codequality-type-stutter` | warning | Exported type names do not repeat the package name |
 
 `codequality-funcorder` ignores `init` functions and `_test.go` files.
+Dependency usage is detected in exported type definitions and method signatures on exported receiver types.
+
+Example:
+
+```go
+type dep interface{ Run() }
+
+type Service struct {
+	dep dep
+}
+
+func (s *Service) Tick(m dep) {}
+```
 
 ## Collections
 
