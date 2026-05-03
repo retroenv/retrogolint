@@ -1,0 +1,30 @@
+# IDE and editor files
+.idea
+.vscode
+*.iml
+*.local
+
+# macOS
+.DS_Store
+
+# Logs and profiling
+/*.log
+*.out
+*.prof
+
+# Test artifacts
+*.test
+coverage.txt
+
+# Debug and binary artifacts
+*.dmp
+*.db
+
+# Compiled/disassembled output
+*.asm
+*.o
+*.dbg
+
+# Build output
+/retrogolint
+*.exe

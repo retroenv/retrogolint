@@ -1,0 +1,60 @@
+package linterconfig
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/retroenv/retrogolib/assert"
+)
+
+func TestLoadFileConfig(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "retrogolint.ini")
+
+	content := `; comment
+format = json
+severity = info
+rules = logging,logging-capitalization
+disabled_rules = logging-efficiency
+max_per_rule = 3
+exclude_tests = true
+exclude_dirs = vendor,testdata
+exclude_files = *_gen.go
+`
+
+	err := os.WriteFile(path, []byte(content), 0644)
+	assert.NoError(t, err)
+
+	fileCfg, err := LoadFileConfig(path)
+	assert.NoError(t, err)
+	assert.Equal(t, "json", fileCfg.Format)
+	assert.Equal(t, "info", fileCfg.Severity)
+	assert.Equal(t, "logging,logging-capitalization", fileCfg.Rules)
+	assert.Equal(t, "logging-efficiency", fileCfg.DisabledRules)
+	assert.Equal(t, 3, fileCfg.MaxPerRule)
+	assert.True(t, fileCfg.ExcludeTests)
+	assert.Equal(t, "vendor,testdata", fileCfg.ExcludeDirs)
+	assert.Equal(t, "*_gen.go", fileCfg.ExcludeFiles)
+
+	cfg := DefaultConfig()
+	err = ApplyFileConfig(cfg, fileCfg)
+	assert.NoError(t, err)
+	assert.Equal(t, "json", cfg.Format)
+	assert.Equal(t, "info", cfg.Severity)
+	assert.Equal(t, []string{"logging", "logging-capitalization"}, cfg.Rules)
+	assert.Equal(t, []string{"logging-efficiency"}, cfg.DisabledRules)
+	assert.Equal(t, 3, cfg.MaxPerRule)
+	assert.True(t, cfg.ExcludeTests)
+	assert.Equal(t, []string{"vendor", "testdata"}, cfg.ExcludeDirs)
+	assert.Equal(t, []string{"*_gen.go"}, cfg.ExcludeFiles)
+}
+
+func TestApplyFileConfig_InvalidFormat(t *testing.T) {
+	cfg := DefaultConfig()
+	fileCfg := DefaultFileConfig()
+	fileCfg.Format = "yaml"
+
+	err := ApplyFileConfig(cfg, fileCfg)
+	assert.Error(t, err)
+}
