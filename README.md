@@ -3,6 +3,7 @@
 [![Build status](https://github.com/retroenv/retrogolint/actions/workflows/go.yaml/badge.svg?branch=main)](https://github.com/retroenv/retrogolint/actions)
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/retroenv/retrogolint)
 [![Go Report Card](https://goreportcard.com/badge/github.com/retroenv/retrogolint)](https://goreportcard.com/report/github.com/retroenv/retrogolint)
+[![codecov](https://codecov.io/gh/retroenv/retrogolint/branch/main/graph/badge.svg?token=NS5UY28V3A)](https://codecov.io/gh/retroenv/retrogolint)
 
 ## Installation
 
