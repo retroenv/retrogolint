@@ -50,6 +50,35 @@ exclude_files = *_gen.go
 	assert.Equal(t, []string{"*_gen.go"}, cfg.ExcludeFiles)
 }
 
+func TestLoadFileConfig_WithGlobalSections(t *testing.T) {
+	content := `# retrogolint configuration
+
+[output]
+format = text
+severity = info
+max_per_rule = 0
+
+[rules]
+enable_all = true
+disabled-rules = logging-efficiency
+
+[integration]
+exclude_tests = true
+exclude_dirs = vendor,testdata
+exclude_files = *_gen.go
+`
+
+	fileCfg, err := loadFileConfigBytes([]byte(content), "testdata")
+	assert.NoError(t, err)
+	assert.Equal(t, "text", fileCfg.Format)
+	assert.Equal(t, "info", fileCfg.Severity)
+	assert.Equal(t, "logging-efficiency", fileCfg.DisabledRules)
+	assert.Equal(t, 0, fileCfg.MaxPerRule)
+	assert.True(t, fileCfg.ExcludeTests)
+	assert.Equal(t, "vendor,testdata", fileCfg.ExcludeDirs)
+	assert.Equal(t, "*_gen.go", fileCfg.ExcludeFiles)
+}
+
 func TestLoadFileConfig_PerRuleExclusions(t *testing.T) {
 	content := `[rule.logging-capitalization]
 exclude-files = assert/*_test.go

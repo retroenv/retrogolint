@@ -9,6 +9,10 @@ Changed:
 * logging rules now analyze wrapper calls that pass structured `log.*` fields, including message capitalization, field casing, formatting, hex casts, specialized fields, eager field evaluation, and `.String()` method checks.
 * shared log-call detection now tracks message and field argument positions for direct logger calls and wrapper calls.
 
+Fixed:
+
+* sectioned `.retrogolint.ini` files now apply global settings from `[output]`, `[rules]`, and `[integration]`, so options such as `severity = info` are honored without requiring matching CLI flags.
+
 ## [v1.0.2] - 2026-05-03
 
 Changed:

@@ -187,7 +187,17 @@ func normalizeConfigData(data []byte) []byte {
 		}
 
 		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, "#") || strings.HasPrefix(trimmed, "[") || !strings.Contains(trimmed, "=") {
+		if isGlobalSectionHeader(trimmed) {
+			lines[i] = ""
+			continue
+		}
+
+		if strings.HasPrefix(trimmed, "[") {
+			lines[i] = line
+			continue
+		}
+
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") || !strings.Contains(trimmed, "=") {
 			lines[i] = line
 			continue
 		}
@@ -204,4 +214,13 @@ func normalizeConfigData(data []byte) []byte {
 	}
 
 	return []byte(strings.Join(lines, "\n"))
+}
+
+func isGlobalSectionHeader(line string) bool {
+	switch strings.TrimSpace(line) {
+	case "[output]", "[rules]", "[integration]":
+		return true
+	default:
+		return false
+	}
 }
