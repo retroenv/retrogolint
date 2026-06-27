@@ -24,7 +24,7 @@ func (r *LoggingEfficiencyRule) Name() string {
 
 // Description returns the rule description.
 func (r *LoggingEfficiencyRule) Description() string {
-	return "Use lazy evaluation for method calls in log fields to avoid execution when logging is disabled"
+	return "Use lazy evaluation for function or method calls in log fields to avoid execution when logging is disabled"
 }
 
 // Severity returns the default severity.
@@ -68,20 +68,23 @@ func (r *LoggingEfficiencyRule) Check(fset *token.FileSet, file *ast.File) []vio
 
 			valueExpr := fieldCall.Args[1]
 
-			if _, isCall := valueExpr.(*ast.CallExpr); isCall {
-				if r.isLazyEvaluation(fieldCall) {
-					continue
-				}
-
-				pos := fset.Position(fieldCall.Pos())
-
-				violations = append(violations, violation.Violation{
-					Rule:     r.Name(),
-					Message:  "Use lazy evaluation for method calls in log fields (e.g., log.StringFunc)",
-					Position: pos,
-					Severity: r.Severity(),
-				})
+			callExpr, isCall := valueExpr.(*ast.CallExpr)
+			if !isCall {
+				continue
 			}
+
+			if r.isLazyEvaluation(fieldCall) || r.isBuiltinCall(callExpr) {
+				continue
+			}
+
+			pos := fset.Position(fieldCall.Pos())
+
+			violations = append(violations, violation.Violation{
+				Rule:     r.Name(),
+				Message:  "Use lazy evaluation for function or method calls in log fields (e.g., log.StringFunc)",
+				Position: pos,
+				Severity: r.Severity(),
+			})
 		}
 
 		return true
@@ -103,4 +106,18 @@ func (r *LoggingEfficiencyRule) isLazyEvaluation(call *ast.CallExpr) bool {
 	}
 
 	return false
+}
+
+func (r *LoggingEfficiencyRule) isBuiltinCall(call *ast.CallExpr) bool {
+	ident, ok := call.Fun.(*ast.Ident)
+	if !ok {
+		return false
+	}
+
+	switch ident.Name {
+	case "len", "cap":
+		return true
+	default:
+		return false
+	}
 }

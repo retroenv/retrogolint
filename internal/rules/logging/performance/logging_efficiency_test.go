@@ -55,7 +55,25 @@ func test() {
 		log.String("alloc", alloc.Name()),
 		log.Int("field_count", len(fields)))
 }`,
-			wantViolations: 2,
+			wantViolations: 1,
+		},
+		{
+			name: "builtin len is not flagged",
+			code: `package test
+import "log"
+func test(logger Logger, fields []Field) {
+	logger.Info("Process", log.Int("field_count", len(fields)))
+}`,
+			wantViolations: 0,
+		},
+		{
+			name: "helper function call is still flagged",
+			code: `package test
+import "log"
+func test(logger Logger, values map[string]int) {
+	logger.Info("Process", log.Int("count", countValues(values)))
+}`,
+			wantViolations: 1,
 		},
 	}
 

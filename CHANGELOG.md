@@ -12,6 +12,7 @@ Changed:
 Fixed:
 
 * sectioned `.retrogolint.ini` files now apply global settings from `[output]`, `[rules]`, and `[integration]`, so options such as `severity = info` are honored without requiring matching CLI flags.
+* `logging-efficiency` no longer reports built-in calls such as `len(...)` and `cap(...)`, which cannot use lazy field helpers directly and produced noisy false positives.
 
 ## [v1.0.2] - 2026-05-03
 
