@@ -49,6 +49,19 @@ func test(logger Logger, address uint16) {
 }`,
 			wantViolations: 0,
 		},
+		{
+			name: "fmt.Sprintf hex formatting in log wrapper",
+			code: `package test
+import (
+	"fmt"
+	"log"
+)
+func test(address uint16) {
+	debugutil.LogOptimization(opts, Name, "Message",
+		log.String("addr", fmt.Sprintf("0x%04X", address)))
+}`,
+			wantViolations: 1,
+		},
 	}
 
 	for _, tt := range tests {

@@ -66,11 +66,16 @@ func (r *LoggingSpecializedFieldRule) Check(fset *token.FileSet, file *ast.File)
 
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			call, ok := node.(*ast.CallExpr)
-			if !ok || !api.IsLoggerMethod(call) {
+			if !ok {
 				return true
 			}
 
-			for i := 1; i < len(call.Args); i++ {
+			logCall, ok := api.GetLogCallInfo(call)
+			if !ok {
+				return true
+			}
+
+			for i := logCall.FieldStartIndex; i < len(call.Args); i++ {
 				fieldCall, ok := call.Args[i].(*ast.CallExpr)
 				if !ok || !api.IsLogFieldCall(fieldCall) {
 					continue

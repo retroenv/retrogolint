@@ -203,6 +203,11 @@ func TestIsLogFieldCall(t *testing.T) {
 			code: `package test; import "log"; func test() { log.Other("key", "val") }`,
 			want: false,
 		},
+		{
+			name: "selector on non-log package",
+			code: `package test; func test(instr Instr) { instr.String() }`,
+			want: false,
+		},
 	}
 
 	for _, tt := range tests {

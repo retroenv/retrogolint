@@ -16,8 +16,16 @@ const (
 	CategoryCollections = "collections"
 	CategoryCodeQuality = "codequality"
 	LogFieldTypeString  = "String"
+	NoLogArgument       = -1
+	PackageLog          = "log"
 	PackageFmt          = "fmt"
 )
+
+// LogCallInfo describes where log-specific arguments live in a call expression.
+type LogCallInfo struct {
+	MessageArgIndex int
+	FieldStartIndex int
+}
 
 // Rule represents a linting rule that can detect violations.
 type Rule interface {
@@ -51,10 +59,60 @@ func IsLoggerMethod(call *ast.CallExpr) bool {
 	return false
 }
 
+// GetLogCallInfo identifies direct logger calls and wrapper calls that carry log fields.
+func GetLogCallInfo(call *ast.CallExpr) (LogCallInfo, bool) {
+	if IsLoggerMethod(call) {
+		return LogCallInfo{
+			MessageArgIndex: 0,
+			FieldStartIndex: 1,
+		}, true
+	}
+
+	fieldStartIndex := FirstLogFieldArgIndex(call.Args)
+	if fieldStartIndex != NoLogArgument {
+		return LogCallInfo{
+			MessageArgIndex: findLogMessageArgIndex(call.Args[:fieldStartIndex]),
+			FieldStartIndex: fieldStartIndex,
+		}, true
+	}
+
+	if isLikelyLogWrapperCall(call) {
+		messageArgIndex := findLogMessageArgIndex(call.Args)
+		if messageArgIndex != NoLogArgument {
+			return LogCallInfo{
+				MessageArgIndex: messageArgIndex,
+				FieldStartIndex: len(call.Args),
+			}, true
+		}
+	}
+
+	return LogCallInfo{
+		MessageArgIndex: NoLogArgument,
+		FieldStartIndex: NoLogArgument,
+	}, false
+}
+
+// FirstLogFieldArgIndex returns the first argument that looks like a structured log field.
+func FirstLogFieldArgIndex(args []ast.Expr) int {
+	for i, arg := range args {
+		fieldCall, ok := arg.(*ast.CallExpr)
+		if ok && IsLogFieldCall(fieldCall) {
+			return i
+		}
+	}
+
+	return NoLogArgument
+}
+
 // IsLogFieldCall checks if a call expression is a log field constructor.
 func IsLogFieldCall(call *ast.CallExpr) bool {
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok {
+		return false
+	}
+
+	ident, ok := sel.X.(*ast.Ident)
+	if !ok || ident.Name != PackageLog {
 		return false
 	}
 
@@ -198,4 +256,43 @@ func ExprToString(expr ast.Expr) string {
 		return ExprToString(e.X)
 	}
 	return ""
+}
+
+func findLogMessageArgIndex(args []ast.Expr) int {
+	for i := len(args) - 1; i >= 0; i-- {
+		if isLogMessageArg(args[i]) {
+			return i
+		}
+	}
+
+	return NoLogArgument
+}
+
+func isLogMessageArg(expr ast.Expr) bool {
+	if _, ok := ExtractStringLiteral(expr); ok {
+		return true
+	}
+
+	call, ok := expr.(*ast.CallExpr)
+	if !ok {
+		return false
+	}
+
+	return IsFmtSprintfCall(call)
+}
+
+func isLikelyLogWrapperCall(call *ast.CallExpr) bool {
+	name := callName(call)
+	return strings.HasPrefix(name, "Log")
+}
+
+func callName(call *ast.CallExpr) string {
+	switch fun := call.Fun.(type) {
+	case *ast.Ident:
+		return fun.Name
+	case *ast.SelectorExpr:
+		return fun.Sel.Name
+	default:
+		return ""
+	}
 }

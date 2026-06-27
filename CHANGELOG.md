@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.3] - 2026-0x-xx
+
+Changed:
+
+* logging rules now analyze wrapper calls that pass structured `log.*` fields, including message capitalization, field casing, formatting, hex casts, specialized fields, eager field evaluation, and `.String()` method checks.
+* shared log-call detection now tracks message and field argument positions for direct logger calls and wrapper calls.
+
 ## [v1.0.2] - 2026-05-03
 
 Changed:

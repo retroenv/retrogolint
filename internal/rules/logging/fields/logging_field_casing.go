@@ -47,11 +47,12 @@ func (r *LoggingFieldCasingRule) Check(fset *token.FileSet, file *ast.File) []vi
 			return true
 		}
 
-		if !api.IsLoggerMethod(call) {
+		logCall, ok := api.GetLogCallInfo(call)
+		if !ok {
 			return true
 		}
 
-		for i := 1; i < len(call.Args); i++ {
+		for i := logCall.FieldStartIndex; i < len(call.Args); i++ {
 			fieldCall, ok := call.Args[i].(*ast.CallExpr)
 			if !ok {
 				continue

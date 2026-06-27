@@ -48,15 +48,17 @@ func (r *LoggingCapitalizationRule) Check(fset *token.FileSet, file *ast.File) [
 			return true
 		}
 
-		if !api.IsLoggerMethod(call) {
+		logCall, ok := api.GetLogCallInfo(call)
+		if !ok {
 			return true
 		}
 
-		if len(call.Args) == 0 {
+		if logCall.MessageArgIndex == api.NoLogArgument || logCall.MessageArgIndex >= len(call.Args) {
 			return true
 		}
 
-		message, ok := api.ExtractStringLiteral(call.Args[0])
+		messageArg := call.Args[logCall.MessageArgIndex]
+		message, ok := api.ExtractStringLiteral(messageArg)
 		if !ok {
 			return true
 		}
@@ -67,7 +69,7 @@ func (r *LoggingCapitalizationRule) Check(fset *token.FileSet, file *ast.File) [
 
 		firstRune := rune(message[0])
 		if !unicode.IsUpper(firstRune) && unicode.IsLetter(firstRune) {
-			pos := fset.Position(call.Args[0].Pos())
+			pos := fset.Position(messageArg.Pos())
 
 			violations = append(violations, violation.Violation{
 				Rule:     r.Name(),

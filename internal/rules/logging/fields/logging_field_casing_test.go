@@ -88,6 +88,15 @@ func test(logger Logger) {
 }`,
 			wantViolations: 0,
 		},
+		{
+			name: "camelCase field in generic wrapper",
+			code: `package test
+import "log"
+func test() {
+	emit(logger, "Test", log.String("fileName", "test.txt"))
+}`,
+			wantViolations: 1,
+		},
 	}
 
 	for _, tt := range tests {

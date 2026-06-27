@@ -46,43 +46,18 @@ func (r *LoggingTypeFormattingRule) Check(fset *token.FileSet, file *ast.File) [
 			return true
 		}
 
-		if !api.IsLoggerMethod(call) {
+		logCall, ok := api.GetLogCallInfo(call)
+		if !ok {
 			return true
 		}
 
-		for i := 1; i < len(call.Args); i++ {
+		for i := logCall.FieldStartIndex; i < len(call.Args); i++ {
 			fieldCall, ok := call.Args[i].(*ast.CallExpr)
 			if !ok {
 				continue
 			}
 
-			if !api.IsLogStringCall(fieldCall) {
-				continue
-			}
-
-			if len(fieldCall.Args) < 2 {
-				continue
-			}
-
-			sprintfCall, ok := fieldCall.Args[1].(*ast.CallExpr)
-			if !ok {
-				continue
-			}
-
-			if !api.IsFmtSprintfCall(sprintfCall) {
-				continue
-			}
-
-			if len(sprintfCall.Args) < 1 {
-				continue
-			}
-
-			formatStr, ok := api.ExtractStringLiteral(sprintfCall.Args[0])
-			if !ok {
-				continue
-			}
-
-			if api.ContainsFormatVerb(formatStr, 'T') {
+			if hasTypeFormatting(fieldCall) {
 				pos := fset.Position(fieldCall.Pos())
 
 				violations = append(violations, violation.Violation{
@@ -98,4 +73,9 @@ func (r *LoggingTypeFormattingRule) Check(fset *token.FileSet, file *ast.File) [
 	})
 
 	return violations
+}
+
+func hasTypeFormatting(fieldCall *ast.CallExpr) bool {
+	formatStr, ok := extractSprintfFormatFromLogStringField(fieldCall)
+	return ok && api.ContainsFormatVerb(formatStr, 'T')
 }

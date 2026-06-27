@@ -2,6 +2,7 @@ package api
 
 import (
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"testing"
 
@@ -27,6 +28,69 @@ func TestIsLoggerMethod(t *testing.T) {
 	}
 	assert.False(t, IsLoggerMethod(loggerCall("logger", "Println")))
 	assert.False(t, IsLoggerMethod(&ast.CallExpr{Fun: &ast.Ident{Name: "Info"}}))
+}
+
+func TestGetLogCallInfo(t *testing.T) {
+	tests := []struct {
+		name              string
+		code              string
+		wantOK            bool
+		wantMessageArg    int
+		wantFieldStartArg int
+	}{
+		{
+			name:              "direct logger method",
+			code:              `package test; func test(logger Logger) { logger.Info("Message", log.String("field", value)) }`,
+			wantOK:            true,
+			wantMessageArg:    0,
+			wantFieldStartArg: 1,
+		},
+		{
+			name:              "log wrapper with fixed args before message",
+			code:              `package test; func test() { debugutil.LogOptimization(opts, Name, "Message", log.String("field", value)) }`,
+			wantOK:            true,
+			wantMessageArg:    2,
+			wantFieldStartArg: 3,
+		},
+		{
+			name:              "generic wrapper with log field args",
+			code:              `package test; func test() { emit(logger, "Message", log.String("field", value)) }`,
+			wantOK:            true,
+			wantMessageArg:    1,
+			wantFieldStartArg: 2,
+		},
+		{
+			name:              "message-only log wrapper",
+			code:              `package test; func test() { debugutil.LogOptimization(opts, Name, "Message") }`,
+			wantOK:            true,
+			wantMessageArg:    2,
+			wantFieldStartArg: 3,
+		},
+		{
+			name:   "fmt.Errorf with string method argument is not a log call",
+			code:   `package test; import "fmt"; func test(instr Instr) error { return fmt.Errorf("invalid X86 segment usage in instruction %s", instr.String()) }`,
+			wantOK: false,
+		},
+		{
+			name: "non-log call",
+			code: `package test; func test() { doWork("Message") }`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			call := parseOnlyCall(t, tt.code)
+			got, ok := GetLogCallInfo(call)
+
+			assert.Equal(t, tt.wantOK, ok)
+			if !tt.wantOK {
+				return
+			}
+
+			assert.Equal(t, tt.wantMessageArg, got.MessageArgIndex)
+			assert.Equal(t, tt.wantFieldStartArg, got.FieldStartIndex)
+		})
+	}
 }
 
 func TestIsLogFieldCall(t *testing.T) {
@@ -157,4 +221,28 @@ func TestIsStringMethodCall(t *testing.T) {
 	assert.False(t, IsStringMethodCall(call))
 
 	assert.False(t, IsStringMethodCall(&ast.CallExpr{Fun: &ast.Ident{Name: "String"}}))
+}
+
+func parseOnlyCall(t *testing.T, code string) *ast.CallExpr {
+	t.Helper()
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "test.go", code, 0)
+	assert.NoError(t, err)
+
+	var call *ast.CallExpr
+	ast.Inspect(file, func(n ast.Node) bool {
+		if call != nil {
+			return false
+		}
+		if c, ok := n.(*ast.CallExpr); ok {
+			call = c
+			return false
+		}
+		return true
+	})
+
+	assert.NotNil(t, call)
+
+	return call
 }

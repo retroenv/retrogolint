@@ -78,12 +78,29 @@ func test() error {
 			wantViolations: 0,
 		},
 		{
+			name: "fmt.Errorf with string method argument not flagged",
+			code: `package test
+import "fmt"
+func test(instr Instr) error {
+	return fmt.Errorf("invalid X86 segment usage in instruction %s", instr.String())
+}`,
+			wantViolations: 0,
+		},
+		{
 			name: "testing.T not flagged (false positive check)",
 			code: `package test
 func test(t *testing.T) {
 	t.Errorf("test error")
 }`,
 			wantViolations: 0,
+		},
+		{
+			name: "lowercase message in log wrapper",
+			code: `package test
+func test() {
+	debugutil.LogOptimization(opts, Name, "lowercase message")
+}`,
+			wantViolations: 1,
 		},
 	}
 

@@ -45,6 +45,18 @@ func test(logger Logger, count int) {
 }`,
 			wantViolations: 0,
 		},
+		{
+			name: "eager call in log wrapper field",
+			code: `package test
+import "log"
+func test() {
+	debugutil.LogOptimization(opts, Name,
+		"Flattening struct",
+		log.String("alloc", alloc.Name()),
+		log.Int("field_count", len(fields)))
+}`,
+			wantViolations: 2,
+		},
 	}
 
 	for _, tt := range tests {
