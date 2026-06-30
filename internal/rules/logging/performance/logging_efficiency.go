@@ -101,7 +101,7 @@ func (r *LoggingEfficiencyRule) isLazyEvaluation(call *ast.CallExpr) bool {
 	}
 
 	switch sel.Sel.Name {
-	case "StringFunc", "IntFunc", "Int64Func", "UintFunc", "Uint64Func", "Float64Func":
+	case "StringFunc", "StringerFunc", "IntFunc", "Int64Func", "UintFunc", "Uint64Func", "Float64Func", "BoolFunc", "DurationFunc":
 		return true
 	}
 
@@ -115,7 +115,10 @@ func (r *LoggingEfficiencyRule) isBuiltinCall(call *ast.CallExpr) bool {
 	}
 
 	switch ident.Name {
-	case "len", "cap":
+	case "len", "cap",
+		"bool", "byte", "complex64", "complex128", "error", "float32", "float64",
+		"int", "int8", "int16", "int32", "int64", "rune", "string",
+		"uint", "uint8", "uint16", "uint32", "uint64", "uintptr":
 		return true
 	default:
 		return false

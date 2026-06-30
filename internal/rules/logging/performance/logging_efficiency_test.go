@@ -67,6 +67,16 @@ func test(logger Logger, fields []Field) {
 			wantViolations: 0,
 		},
 		{
+			name: "type conversion is not flagged",
+			code: `package test
+import "log"
+type format byte
+func test(logger Logger, f format) {
+	logger.Info("Process", log.String("format", string(f)))
+}`,
+			wantViolations: 0,
+		},
+		{
 			name: "helper function call is still flagged",
 			code: `package test
 import "log"

@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.0.3] - 2026-0x-xx
+## [v1.0.3] - 2026-06-30
 
 Changed:
 
@@ -13,6 +13,7 @@ Fixed:
 
 * sectioned `.retrogolint.ini` files now apply global settings from `[output]`, `[rules]`, and `[integration]`, so options such as `severity = info` are honored without requiring matching CLI flags.
 * `logging-efficiency` no longer reports built-in calls such as `len(...)` and `cap(...)`, which cannot use lazy field helpers directly and produced noisy false positives.
+* `logging-efficiency` now only flags function and method calls that can be replaced with lazy variants (for example `log.StringFunc`, `log.IntFunc`), while leaving non-wrapper calls unchanged.
 
 ## [v1.0.2] - 2026-05-03
 

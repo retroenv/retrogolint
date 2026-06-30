@@ -119,7 +119,7 @@ func IsLogFieldCall(call *ast.CallExpr) bool {
 	switch sel.Sel.Name {
 	case LogFieldTypeString, "Int", "Int64", "Uint", "Uint64", "Float64", "Bool",
 		"Duration", "Time", "Error", "Stringer", "Hex", "Type",
-		"StringFunc", "IntFunc":
+		"StringFunc", "StringerFunc", "IntFunc", "Int64Func", "Float64Func", "BoolFunc", "DurationFunc":
 		return true
 	}
 	return false
