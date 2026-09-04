@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.4] - 2026-09-04
+
+Added:
+
+* add collection rules that detect `retrogolib/set` membership scans, `Set.ToSlice` calls, and manual set sorting; use `Set.Contains`, `set.Sorted`, or `set.SortedFunc` instead.
+
+Changed:
+
+* `codequality-funcorder` now requires a type declaration before constants that declare that type.
+
 ## [v1.0.3] - 2026-07-01
 
 Changed:
