@@ -27,7 +27,7 @@ func (r *FuncOrderRule) Name() string {
 
 // Description returns the rule description.
 func (r *FuncOrderRule) Description() string {
-	return "Declarations should be ordered: exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions. Exception: unexported type dependencies may appear directly before an exported type when that type uses them."
+	return "Declarations should be ordered: types before typed constants; exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions. Exception: unexported type dependencies may appear directly before an exported type when that type uses them."
 }
 
 // Severity returns the default severity.
@@ -81,8 +81,64 @@ func (r *FuncOrderRule) Check(fset *token.FileSet, file *ast.File) []violation.V
 		}
 	}
 
+	violations = append(violations, r.checkTypedConstantOrdering(fset, file)...)
 	violations = append(violations, r.checkDependencyOrdering(fset, decls)...)
 	return violations
+}
+
+func (r *FuncOrderRule) checkTypedConstantOrdering(fset *token.FileSet, file *ast.File) []violation.Violation {
+	typePositions := namedTypePositions(file)
+	var violations []violation.Violation
+
+	for _, declaration := range file.Decls {
+		constantDeclaration, ok := declaration.(*ast.GenDecl)
+		if !ok || constantDeclaration.Tok != token.CONST {
+			continue
+		}
+
+		for _, specification := range constantDeclaration.Specs {
+			constant, ok := specification.(*ast.ValueSpec)
+			if !ok || constant.Type == nil || len(constant.Names) == 0 {
+				continue
+			}
+
+			for _, typeName := range referencedTypeNames(constant.Type) {
+				typePosition, ok := typePositions[typeName]
+				if !ok || typePosition < constant.Pos() {
+					continue
+				}
+
+				violations = append(violations, violation.Violation{
+					Rule:     r.Name(),
+					Message:  "type " + typeName + " should be declared before constant " + constant.Names[0].Name,
+					Position: fset.Position(typePosition),
+					Severity: r.Severity(),
+				})
+			}
+		}
+	}
+
+	return violations
+}
+
+func namedTypePositions(file *ast.File) map[string]token.Pos {
+	positions := make(map[string]token.Pos)
+
+	for _, declaration := range file.Decls {
+		typeDeclaration, ok := declaration.(*ast.GenDecl)
+		if !ok || typeDeclaration.Tok != token.TYPE {
+			continue
+		}
+
+		for _, specification := range typeDeclaration.Specs {
+			typeSpec, ok := specification.(*ast.TypeSpec)
+			if ok {
+				positions[typeSpec.Name.Name] = typeSpec.Pos()
+			}
+		}
+	}
+
+	return positions
 }
 
 func (r *FuncOrderRule) checkDependencyOrdering(fset *token.FileSet, decls []declInfo) []violation.Violation {
@@ -419,7 +475,7 @@ func referencedTypeNames(expr ast.Expr) []string {
 		return true
 	})
 
-	return seen.ToSlice()
+	return set.Sorted(seen)
 }
 
 func functionSignatureReferencesIdent(fnType *ast.FuncType, ident string) bool {
