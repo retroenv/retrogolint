@@ -105,6 +105,30 @@ type Service struct{}
 			wantViolations: 1,
 		},
 		{
+			name:     "type after typed constant",
+			filename: "test.go",
+			code: `package test
+const (
+	OperandInvalid OperandKind = iota
+	OperandValue
+)
+type OperandKind uint8
+`,
+			wantViolations: 1,
+		},
+		{
+			name:     "type before typed constant",
+			filename: "test.go",
+			code: `package test
+type OperandKind uint8
+const (
+	OperandInvalid OperandKind = iota
+	OperandValue
+)
+`,
+			wantViolations: 0,
+		},
+		{
 			name:     "exported method after unexported function",
 			filename: "test.go",
 			code: `package test
@@ -198,5 +222,12 @@ func TestFuncOrderRule_Metadata(t *testing.T) {
 
 	assert.Equal(t, "codequality-funcorder", rule.Name())
 	assert.Equal(t, "codequality", rule.Category())
-	assert.Equal(t, "Declarations should be ordered: exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions. Exception: unexported type dependencies may appear directly before an exported type when that type uses them.", rule.Description())
+	assert.Equal(t, "Declarations should be ordered: types before typed constants; exported types, exported constructors, exported methods, unexported methods on exported types, exported functions, unexported types, unexported constructors, methods on unexported types, unexported functions. Exception: unexported type dependencies may appear directly before an exported type when that type uses them.", rule.Description())
+}
+
+func TestReferencedTypeNamesAreSortedAndDeduplicated(t *testing.T) {
+	expression, err := parser.ParseExpr("map[zType]aType")
+	assert.NoError(t, err)
+
+	assert.Equal(t, []string{"aType", "zType"}, referencedTypeNames(expression))
 }
