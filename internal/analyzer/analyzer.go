@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
@@ -85,6 +86,9 @@ func (a *Analyzer) analyzeFile(path string, activeRules []api.Rule) ([]violation
 	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file: %w", err)
+	}
+	if ast.IsGenerated(file) {
+		return nil, nil
 	}
 
 	var violations []violation.Violation

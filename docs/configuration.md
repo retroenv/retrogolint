@@ -36,6 +36,7 @@ Notes:
 - Lines starting with `#` or `;` are comments.
 - Empty `rules` means all rules are enabled.
 - Unknown rule names or categories in `rules` and `disabled-rules` are reported as errors.
+- Generated Go files are skipped by default when they contain a standard `// Code generated ... DO NOT EDIT.` header before the package declaration.
 - `exclude-files` matches basenames for patterns without `/`, and relative path suffixes for patterns with `/`.
 
 ## Per-Rule Exclusions
