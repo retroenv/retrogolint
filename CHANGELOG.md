@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.5] - 2026-09-12
+
+Added:
+
+* add `codequality-struct-literal-multiline` to require keyed struct literals with two or more fields to use multiple lines.
+
+Changed:
+
+* generated Go files are now skipped, preventing lint violations from generated code.
+
 ## [v1.0.4] - 2026-09-04
 
 Added:

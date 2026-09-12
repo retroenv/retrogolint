@@ -44,6 +44,7 @@ func NewRegistry() *Registry {
 	r.Register(linttesting.NewAssertUsageRule())
 	r.Register(codequality.NewFuncOrderRule())
 	r.Register(codequality.NewParamPriorityRule())
+	r.Register(codequality.NewStructLiteralMultilineRule())
 	r.Register(codequality.NewTypeStutterRule())
 
 	return r

@@ -8,6 +8,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 |------|----------|--------|
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
+| `codequality-struct-literal-multiline` | warning | Keyed struct literals with two or more fields use multiple lines |
 | `codequality-type-stutter` | warning | Exported type names do not repeat the package name |
 
 `codequality-funcorder` ignores `init` functions and `_test.go` files.
