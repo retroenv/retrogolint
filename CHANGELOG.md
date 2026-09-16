@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+Added:
+
+* add `codequality-func-signature-layout` to require compact function signatures and consistent parameter wrapping at 120 columns.
+
 ## [v1.0.5] - 2026-09-12
 
 Added:

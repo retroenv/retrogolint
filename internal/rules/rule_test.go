@@ -236,6 +236,7 @@ func TestRegistryValidateFilters(t *testing.T) {
 		"logging",
 		"logging-capitalization",
 		"codequality",
+		"codequality-func-signature-layout",
 	}))
 
 	err := registry.ValidateFilters([]string{"logging-capitalisation"})

@@ -26,7 +26,7 @@ A Go static analyzer that enforces conventions for projects built with
 | **Logging** | Message style, structured fields, logger use, and eager field evaluation |
 | **Testing** | Manual assertions that can use `retrogolib/assert` |
 | **Collections** | Map-based sets and inefficient `retrogolib/set` operations |
-| **Code quality** | Declaration order, parameter order, and exported type names |
+| **Code quality** | Function signature layout, declaration order, parameter order, and exported type names |
 
 See the [rule reference](docs/rules.md) for rule details and examples.
 
