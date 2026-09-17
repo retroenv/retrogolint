@@ -74,6 +74,10 @@ func (r *FuncSignatureLayoutRule) Check(fset *token.FileSet, file *ast.File) []v
 }
 
 func (signature functionSignature) hasValidLayout(fset *token.FileSet, function *ast.FuncDecl) bool {
+	if hasMultilineSignatureField(fset, function) {
+		return true
+	}
+
 	startLine := fset.Position(function.Type.Func).Line
 	endLine := fset.Position(functionSignatureEnd(function)).Line
 	fullWidth := len(signature.prefix) + len(strings.Join(signature.parameters, ", ")) + len(signature.suffix)
@@ -82,23 +86,24 @@ func (signature functionSignature) hasValidLayout(fset *token.FileSet, function 
 		return startLine == endLine
 	}
 
-	if startLine == endLine || fset.Position(function.Type.Params.Opening).Line != startLine {
-		return false
+	if startLine == endLine {
+		return signature.requiresIndivisibleOverrun()
 	}
-
-	expectedFirstLineParameters := signature.firstLineParameterCount()
-	actualFirstLineParameters := firstLineParameterCount(fset, function)
-	if actualFirstLineParameters != expectedFirstLineParameters {
+	if fset.Position(function.Type.Params.Opening).Line != startLine {
 		return false
 	}
 
 	parameters := function.Type.Params.List
-	for _, parameter := range parameters {
+	expectedLines := signature.parameterLineIndexes()
+	if len(parameters) != len(expectedLines) {
+		return false
+	}
+
+	for index, parameter := range parameters {
 		if fset.Position(parameter.Pos()).Line != fset.Position(parameter.End()).Line {
 			return false
 		}
-
-		if fset.Position(parameter.End()-1).Column > maxFunctionDeclarationColumns {
+		if fset.Position(parameter.Pos()).Line != startLine+expectedLines[index] {
 			return false
 		}
 	}
@@ -114,35 +119,60 @@ func (signature functionSignature) hasValidLayout(fset *token.FileSet, function 
 	return signature.hasValidResultLayout(fset, function, lastParameterLine)
 }
 
-func (signature functionSignature) firstLineParameterCount() int {
-	line := signature.prefix
-
-	for index, parameter := range signature.parameters {
-		candidate := line + parameter
-		if index < len(signature.parameters)-1 {
-			candidate += ","
-		} else {
-			candidate += signature.suffix
-		}
-		if len(candidate) > maxFunctionDeclarationColumns {
-			return index
-		}
-
-		line += parameter
-		if index < len(signature.parameters)-1 {
-			line += ", "
-		}
+func (signature functionSignature) requiresIndivisibleOverrun() bool {
+	if len(signature.parameters) == 0 {
+		return true
 	}
 
-	return len(signature.parameters)
+	lastParameter := signature.parameters[len(signature.parameters)-1]
+	return 1+len(lastParameter)+len(signature.suffix) > maxFunctionDeclarationColumns
+}
+
+func (signature functionSignature) parameterLineIndexes() []int {
+	lines := make([]int, len(signature.parameters))
+	lineIndex := 0
+	lineWidth := len(signature.prefix)
+	parametersOnLine := 0
+
+	for index, parameter := range signature.parameters {
+		separatorWidth := 0
+		if parametersOnLine > 0 {
+			separatorWidth = 1
+		}
+		endingWidth := 1
+		if index == len(signature.parameters)-1 {
+			endingWidth = len(signature.parameterClosingSuffix(parameter))
+		}
+
+		candidateWidth := lineWidth + separatorWidth + len(parameter) + endingWidth
+		if candidateWidth > maxFunctionDeclarationColumns && (lineIndex == 0 || parametersOnLine > 0) {
+			lineIndex++
+			lineWidth = 1
+			parametersOnLine = 0
+			separatorWidth = 0
+		}
+
+		lines[index] = lineIndex
+		lineWidth += separatorWidth + len(parameter) + endingWidth
+		parametersOnLine++
+	}
+
+	return lines
+}
+
+func (signature functionSignature) parameterClosingSuffix(parameter string) string {
+	if signature.suffix == ")" || signature.suffix == ") {" {
+		return signature.suffix
+	}
+	if 1+len(parameter)+len(signature.suffix) <= maxFunctionDeclarationColumns {
+		return signature.suffix
+	}
+
+	return ")"
 }
 
 func (signature functionSignature) hasValidResultLayout(fset *token.FileSet, function *ast.FuncDecl,
 	lastParameterLine int) bool {
-
-	if function.Body != nil && fset.Position(function.Body.Lbrace).Column > maxFunctionDeclarationColumns {
-		return false
-	}
 
 	if function.Type.Results == nil || len(function.Type.Params.List) == 0 {
 		return true
@@ -241,16 +271,19 @@ func functionSignatureEnd(function *ast.FuncDecl) token.Pos {
 	return function.Type.End() - 1
 }
 
-func firstLineParameterCount(fset *token.FileSet, function *ast.FuncDecl) int {
-	openingLine := fset.Position(function.Type.Params.Opening).Line
-	count := 0
+func hasMultilineSignatureField(fset *token.FileSet, function *ast.FuncDecl) bool {
+	fieldLists := []*ast.FieldList{function.Recv, function.Type.TypeParams, function.Type.Params, function.Type.Results}
 
-	for _, parameter := range function.Type.Params.List {
-		if fset.Position(parameter.Pos()).Line != openingLine {
-			break
+	for _, fields := range fieldLists {
+		if fields == nil {
+			continue
 		}
-		count++
+		for _, field := range fields.List {
+			if fset.Position(field.Pos()).Line != fset.Position(field.End()).Line {
+				return true
+			}
+		}
 	}
 
-	return count
+	return false
 }

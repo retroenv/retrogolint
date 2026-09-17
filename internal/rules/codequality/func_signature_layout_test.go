@@ -60,6 +60,38 @@ func BuildRuntimeSnapshot(ctx context.Context, dependencies RuntimeDependencies,
 `,
 		},
 		{
+			name: "continuation line packs parameters that fit",
+			code: `package test
+func OptimizeAdjacentValueHomeCoalesceAtBase(logger *log.Logger, sequence machineopt.Sequence[ast.Node],
+	b MemoryHomePolicy, codeBase uint64) int {
+
+	return 0
+}
+`,
+		},
+		{
+			name: "continuation line leaves avoidable space",
+			code: `package test
+func OptimizeAdjacentValueHomeCoalesceAtBase(logger *log.Logger, sequence machineopt.Sequence[ast.Node],
+	b MemoryHomePolicy,
+	codeBase uint64) int {
+
+	return 0
+}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "result tuple stays with final parameter",
+			code: `package test
+func findDeadTransferBranch(nodes []ast.Node, bridge optmanager.Bridge,
+	includeDead, includeDelayed bool) (int, *deadTransferBranchAlias, bool) {
+
+	return 0, nil, false
+}
+`,
+		},
+		{
 			name: "long signature moves all parameters",
 			code: `package test
 func BuildRuntimeSnapshot(
@@ -123,6 +155,37 @@ func (transformer *Transformer) TransformValues(ctx context.Context, values []In
 	options ExtremelyLongTransformationOptions) ([]Output, error) {
 
 	return nil, nil
+}
+`,
+		},
+		{
+			name: "indivisible function result may exceed line width",
+			code: `package test
+func BuildCallback(values []Value) func(int, machineopt.InstructionView, machineopt.ResourceSet, machineopt.ResourceSet) (machineopt.ResourceSet, machineopt.ResourceSet) {
+
+	return nil
+}
+`,
+		},
+		{
+			name: "indivisible function parameter may exceed line width",
+			code: `package test
+func Apply(values []Value,
+	build func(machineopt.InstructionWindow[Node], analysis.ResourceFacts) (machineopt.SequenceReplacement[Node], bool)) bool {
+
+			return build != nil
+}
+`,
+		},
+		{
+			name: "anonymous struct result keeps intrinsic layout",
+			code: `package test
+func Cases() []struct {
+	name string
+	want bool
+} {
+
+	return nil
 }
 `,
 		},
