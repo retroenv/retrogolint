@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 Added:
 
 * add `codequality-func-signature-layout` to require compact function signatures and consistent parameter wrapping at 120 columns.
+* add `codequality-param-type-combine` to require consecutive parameters with the same type to share one type declaration, including in multiline signatures.
 
 ## [v1.0.5] - 2026-09-12
 

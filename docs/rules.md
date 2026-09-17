@@ -6,14 +6,17 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 
 | Rule | Severity | Checks |
 |------|----------|--------|
-| `codequality-func-signature-layout` | warning | Function and method signatures stay on one line through 120 columns; longer signatures keep complete parameters on the earliest line where they fit |
+| `codequality-func-signature-layout` | warning | Function and method signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
+| `codequality-param-type-combine` | warning | Consecutive function parameters with the same type share one type declaration |
 | `codequality-struct-literal-multiline` | warning | Keyed struct literals with two or more fields use multiple lines |
 | `codequality-type-stutter` | warning | Exported type names do not repeat the package name |
 
 `codequality-funcorder` ignores `init` functions and `_test.go` files.
 Dependency usage is detected in exported type definitions and method signatures on exported receiver types.
+
+Retrogolint provides `codequality-param-type-combine` because GoCritic's `paramTypeCombine` check skips multiline parameter lists. Long signatures need the rule when line wrapping makes repeated types less visible.
 
 Example:
 

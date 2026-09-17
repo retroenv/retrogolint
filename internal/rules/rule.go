@@ -45,6 +45,7 @@ func NewRegistry() *Registry {
 	r.Register(codequality.NewFuncOrderRule())
 	r.Register(codequality.NewFuncSignatureLayoutRule())
 	r.Register(codequality.NewParamPriorityRule())
+	r.Register(codequality.NewParamTypeCombineRule())
 	r.Register(codequality.NewStructLiteralMultilineRule())
 	r.Register(codequality.NewTypeStutterRule())
 

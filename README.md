@@ -3,7 +3,6 @@
 [![CI](https://github.com/retroenv/retrogolint/actions/workflows/go.yaml/badge.svg?branch=main)](https://github.com/retroenv/retrogolint/actions/workflows/go.yaml)
 [![Codecov](https://codecov.io/gh/retroenv/retrogolint/graph/badge.svg)](https://codecov.io/gh/retroenv/retrogolint)
 [![Release](https://img.shields.io/github/v/release/retroenv/retrogolint)](https://github.com/retroenv/retrogolint/releases/latest)
-[![Go Reference](https://pkg.go.dev/badge/github.com/retroenv/retrogolint.svg)](https://pkg.go.dev/github.com/retroenv/retrogolint)
 [![License](https://img.shields.io/github/license/retroenv/retrogolint)](LICENSE)
 ![LLM assisted: human reviewed](https://img.shields.io/badge/LLM%20assisted-human%20reviewed-6f42c1)
 
@@ -26,7 +25,7 @@ A Go static analyzer that enforces conventions for projects built with
 | **Logging** | Message style, structured fields, logger use, and eager field evaluation |
 | **Testing** | Manual assertions that can use `retrogolib/assert` |
 | **Collections** | Map-based sets and inefficient `retrogolib/set` operations |
-| **Code quality** | Function signature layout, declaration order, parameter order, and exported type names |
+| **Code quality** | Function signature layout, declaration order, parameter order, parameter type grouping, and exported type names |
 
 See the [rule reference](docs/rules.md) for rule details and examples.
 
