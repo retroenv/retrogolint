@@ -9,11 +9,7 @@ import (
 )
 
 // Analyze performs analysis and returns violations.
-func Analyze(
-	a *analyzer.Analyzer,
-	paths []string,
-) ([]violation.Violation, error) {
-
+func Analyze(a *analyzer.Analyzer, paths []string) ([]violation.Violation, error) {
 	if len(paths) == 0 {
 		paths = []string{"./..."}
 	}

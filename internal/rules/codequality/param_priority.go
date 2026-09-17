@@ -60,7 +60,9 @@ func (r *ParamPriorityRule) Check(fset *token.FileSet, file *ast.File) []violati
 }
 
 // checkParams checks the parameter ordering of a function declaration.
-func (r *ParamPriorityRule) checkParams(fset *token.FileSet, funcDecl *ast.FuncDecl, violations []violation.Violation) []violation.Violation {
+func (r *ParamPriorityRule) checkParams(fset *token.FileSet, funcDecl *ast.FuncDecl,
+	violations []violation.Violation) []violation.Violation {
+
 	params := funcDecl.Type.Params.List
 
 	// Track position categories for each parameter.

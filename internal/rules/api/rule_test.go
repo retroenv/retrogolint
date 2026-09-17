@@ -97,12 +97,16 @@ func TestIsLogFieldCall(t *testing.T) {
 	for _, method := range []string{"String", "Int", "Int64", "Uint", "Uint64", "Float64",
 		"Bool", "Duration", "Time", "Error", "Stringer", "Hex", "Type", "StringFunc", "IntFunc"} {
 		call := &ast.CallExpr{
-			Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "log"}, Sel: &ast.Ident{Name: method}},
+			Fun: &ast.SelectorExpr{
+				X:   &ast.Ident{Name: "log"},
+				Sel: &ast.Ident{Name: method}},
 		}
 		assert.True(t, IsLogFieldCall(call), method)
 	}
 	call := &ast.CallExpr{
-		Fun: &ast.SelectorExpr{X: &ast.Ident{Name: "log"}, Sel: &ast.Ident{Name: "Unknown"}},
+		Fun: &ast.SelectorExpr{
+			X:   &ast.Ident{Name: "log"},
+			Sel: &ast.Ident{Name: "Unknown"}},
 	}
 	assert.False(t, IsLogFieldCall(call))
 	assert.False(t, IsLogFieldCall(&ast.CallExpr{Fun: &ast.Ident{Name: "String"}}))
@@ -154,15 +158,21 @@ func TestContainsFormatVerb(t *testing.T) {
 }
 
 func TestExtractStringLiteral(t *testing.T) {
-	lit := &ast.BasicLit{Kind: token.STRING, Value: `"hello"`}
+	lit := &ast.BasicLit{
+		Kind:  token.STRING,
+		Value: `"hello"`}
 	val, ok := ExtractStringLiteral(lit)
 	assert.True(t, ok)
 	assert.Equal(t, "hello", val)
 
-	_, ok = ExtractStringLiteral(&ast.BasicLit{Kind: token.INT, Value: "42"})
+	_, ok = ExtractStringLiteral(&ast.BasicLit{
+		Kind:  token.INT,
+		Value: "42"})
 	assert.False(t, ok)
 
-	_, ok = ExtractStringLiteral(&ast.BasicLit{Kind: token.STRING, Value: `"unterminated`})
+	_, ok = ExtractStringLiteral(&ast.BasicLit{
+		Kind:  token.STRING,
+		Value: `"unterminated`})
 	assert.False(t, ok)
 
 	_, ok = ExtractStringLiteral(&ast.Ident{Name: "x"})
@@ -177,7 +187,9 @@ func TestExprToString(t *testing.T) {
 	}))
 	assert.Equal(t, "x", ExprToString(&ast.ParenExpr{X: &ast.Ident{Name: "x"}}))
 	assert.Equal(t, "x", ExprToString(&ast.StarExpr{X: &ast.Ident{Name: "x"}}))
-	assert.Equal(t, "", ExprToString(&ast.BasicLit{Kind: token.INT, Value: "1"}))
+	assert.Equal(t, "", ExprToString(&ast.BasicLit{
+		Kind:  token.INT,
+		Value: "1"}))
 }
 
 func TestIsLogStringCall(t *testing.T) {
@@ -189,7 +201,9 @@ func TestIsLogStringCall(t *testing.T) {
 	}
 	assert.True(t, IsLogStringCall(call))
 
-	call.Fun = &ast.SelectorExpr{X: &ast.Ident{Name: "log"}, Sel: &ast.Ident{Name: "Int"}}
+	call.Fun = &ast.SelectorExpr{
+		X:   &ast.Ident{Name: "log"},
+		Sel: &ast.Ident{Name: "Int"}}
 	assert.False(t, IsLogStringCall(call))
 
 	assert.False(t, IsLogStringCall(&ast.CallExpr{Fun: &ast.Ident{Name: "String"}}))
@@ -204,7 +218,9 @@ func TestIsFmtSprintfCall(t *testing.T) {
 	}
 	assert.True(t, IsFmtSprintfCall(call))
 
-	call.Fun = &ast.SelectorExpr{X: &ast.Ident{Name: "fmt"}, Sel: &ast.Ident{Name: "Println"}}
+	call.Fun = &ast.SelectorExpr{
+		X:   &ast.Ident{Name: "fmt"},
+		Sel: &ast.Ident{Name: "Println"}}
 	assert.False(t, IsFmtSprintfCall(call))
 
 	assert.False(t, IsFmtSprintfCall(&ast.CallExpr{Fun: &ast.Ident{Name: "Sprintf"}}))
@@ -212,7 +228,9 @@ func TestIsFmtSprintfCall(t *testing.T) {
 
 func TestIsStringMethodCall(t *testing.T) {
 	call := &ast.CallExpr{
-		Fun:  &ast.SelectorExpr{X: &ast.Ident{Name: "x"}, Sel: &ast.Ident{Name: "String"}},
+		Fun: &ast.SelectorExpr{
+			X:   &ast.Ident{Name: "x"},
+			Sel: &ast.Ident{Name: "String"}},
 		Args: nil,
 	}
 	assert.True(t, IsStringMethodCall(call))

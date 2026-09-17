@@ -46,9 +46,12 @@ func TestSeverityString(t *testing.T) {
 
 func TestSeverityMarshalJSON(t *testing.T) {
 	v := Violation{
-		Rule:     "test-rule",
-		Message:  "test message",
-		Position: token.Position{Filename: "a.go", Line: 1, Column: 1},
+		Rule:    "test-rule",
+		Message: "test message",
+		Position: token.Position{
+			Filename: "a.go",
+			Line:     1,
+			Column:   1},
 		Severity: SeverityError,
 	}
 

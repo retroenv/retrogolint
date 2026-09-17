@@ -194,7 +194,9 @@ func TestAnalyzer_ShouldExcludeFile(t *testing.T) {
 		{
 			name: "include regular file",
 			config: &linterconfig.Config{
-				RuleExclusions: linterconfig.RuleExclusions{ExcludeTests: false, ExcludeDirs: []string{}},
+				RuleExclusions: linterconfig.RuleExclusions{
+					ExcludeTests: false,
+					ExcludeDirs:  []string{}},
 			},
 			path: "pkg/file.go",
 			want: false,
@@ -286,17 +288,26 @@ func TestAnalyzer_FilterViolations_DeterministicBeforeLimit(t *testing.T) {
 		{
 			Rule:     "logging-capitalization",
 			Severity: violation.SeverityWarning,
-			Position: token.Position{Filename: "b.go", Line: 10, Column: 1},
+			Position: token.Position{
+				Filename: "b.go",
+				Line:     10,
+				Column:   1},
 		},
 		{
 			Rule:     "logging-capitalization",
 			Severity: violation.SeverityWarning,
-			Position: token.Position{Filename: "a.go", Line: 20, Column: 1},
+			Position: token.Position{
+				Filename: "a.go",
+				Line:     20,
+				Column:   1},
 		},
 		{
 			Rule:     "logging-capitalization",
 			Severity: violation.SeverityWarning,
-			Position: token.Position{Filename: "a.go", Line: 5, Column: 1},
+			Position: token.Position{
+				Filename: "a.go",
+				Line:     5,
+				Column:   1},
 		},
 	}
 

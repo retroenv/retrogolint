@@ -1,4 +1,5 @@
-GOLANGCI_VERSION = v2.12.1
+GOLANGCI_VERSION = v2.13.2
+RETROGOLINT_VERSION = v1.0.5
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "")
@@ -10,6 +11,7 @@ help: ## show help, shown by default if no target is specified
 
 lint: ## run code linters
 	golangci-lint run
+	retrogolint
 
 build: ## build retrogolint binary
 	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o retrogolint ./cmd/retrogolint
@@ -29,6 +31,7 @@ test-coverage-web: test-coverage ## run unit tests and show test coverage in bro
 
 install-linters: ## install all used linters
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_VERSION}
+	go install github.com/retroenv/retrogolint/cmd/retrogolint@${RETROGOLINT_VERSION}
 
 clean: ## remove local build and coverage artifacts
 	rm -f retrogolint coverage.txt

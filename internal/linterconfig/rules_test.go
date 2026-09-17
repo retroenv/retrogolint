@@ -32,10 +32,12 @@ func TestRuleExclusions_ShouldExcludeFile(t *testing.T) {
 			want:       true,
 		},
 		{
-			name:       "include regular file",
-			exclusions: RuleExclusions{ExcludeTests: false, ExcludeDirs: []string{}},
-			path:       "pkg/file.go",
-			want:       false,
+			name: "include regular file",
+			exclusions: RuleExclusions{
+				ExcludeTests: false,
+				ExcludeDirs:  []string{}},
+			path: "pkg/file.go",
+			want: false,
 		},
 		{
 			name:       "exclude file by basename glob",

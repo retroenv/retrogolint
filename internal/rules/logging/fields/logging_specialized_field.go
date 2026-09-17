@@ -124,7 +124,9 @@ var conversionTargets = map[string]string{
 	"uint": "Uint",
 }
 
-func (r *LoggingSpecializedFieldRule) resolveOperandType(info *types.Info, operand ast.Expr, typedIdents map[string]string) string {
+func (r *LoggingSpecializedFieldRule) resolveOperandType(info *types.Info, operand ast.Expr,
+	typedIdents map[string]string) string {
+
 	if info != nil {
 		if tv, ok := info.Types[operand]; ok {
 			if t := r.extractBasicType(tv.Type); t != "" {
@@ -141,7 +143,9 @@ func (r *LoggingSpecializedFieldRule) resolveOperandType(info *types.Info, opera
 	return typedIdents[ident.Name]
 }
 
-func (r *LoggingSpecializedFieldRule) checkField(fset *token.FileSet, call *ast.CallExpr, typedIdents map[string]string, info *types.Info) *violation.Violation {
+func (r *LoggingSpecializedFieldRule) checkField(fset *token.FileSet, call *ast.CallExpr, typedIdents map[string]string,
+	info *types.Info) *violation.Violation {
+
 	if len(call.Args) < 2 {
 		return nil
 	}

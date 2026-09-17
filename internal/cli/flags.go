@@ -112,7 +112,9 @@ func printVersion(version, commit, date string) {
 	}
 }
 
-func buildFlagSet(cfg *linterconfig.Config, configPath string) (*cli.FlagSet, *optionFlags, *outputFlags, *positionalArgs) {
+func buildFlagSet(cfg *linterconfig.Config,
+	configPath string) (*cli.FlagSet, *optionFlags, *outputFlags, *positionalArgs) {
+
 	params := &parameterFlags{Config: configPath}
 	options := &optionFlags{
 		Severity:      cfg.Severity,
@@ -179,7 +181,9 @@ func detectFlagOverrides(args []string) (flagState, error) {
 	}, nil
 }
 
-func applyFlagOverrides(cfg *linterconfig.Config, setFlags set.Set[string], options optionFlags, output outputFlags) error {
+func applyFlagOverrides(cfg *linterconfig.Config, setFlags set.Set[string], options optionFlags,
+	output outputFlags) error {
+
 	if setFlags.Contains("format") {
 		if err := linterconfig.ValidateFormat(output.Format); err != nil {
 			return fmt.Errorf("invalid format: %w", err)

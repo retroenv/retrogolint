@@ -16,17 +16,6 @@ const maxFunctionDeclarationColumns = 120
 // FuncSignatureLayoutRule detects function signatures that do not use the available line width.
 type FuncSignatureLayoutRule struct{}
 
-type functionSignature struct {
-	prefix     string
-	parameters []string
-	suffix     string
-}
-
-type functionParameterPart struct {
-	position token.Pos
-	end      token.Pos
-}
-
 // NewFuncSignatureLayoutRule creates a new FuncSignatureLayoutRule.
 func NewFuncSignatureLayoutRule() *FuncSignatureLayoutRule {
 	return &FuncSignatureLayoutRule{}
@@ -76,6 +65,17 @@ func (r *FuncSignatureLayoutRule) Check(fset *token.FileSet, file *ast.File) []v
 	}
 
 	return violations
+}
+
+type functionSignature struct {
+	prefix     string
+	parameters []string
+	suffix     string
+}
+
+type functionParameterPart struct {
+	position token.Pos
+	end      token.Pos
 }
 
 func (signature functionSignature) hasValidLayout(fset *token.FileSet, function *ast.FuncDecl) bool {
@@ -245,7 +245,9 @@ func functionParameterParts(fields []*ast.Field) []functionParameterPart {
 
 	for _, field := range fields {
 		if len(field.Names) == 0 {
-			parts = append(parts, functionParameterPart{position: field.Type.Pos(), end: field.Type.End()})
+			parts = append(parts, functionParameterPart{
+				position: field.Type.Pos(),
+				end:      field.Type.End()})
 			continue
 		}
 
@@ -254,7 +256,9 @@ func functionParameterParts(fields []*ast.Field) []functionParameterPart {
 			if index == len(field.Names)-1 {
 				end = field.Type.End()
 			}
-			parts = append(parts, functionParameterPart{position: name.Pos(), end: end})
+			parts = append(parts, functionParameterPart{
+				position: name.Pos(),
+				end:      end})
 		}
 	}
 

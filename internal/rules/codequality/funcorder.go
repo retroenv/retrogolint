@@ -121,26 +121,6 @@ func (r *FuncOrderRule) checkTypedConstantOrdering(fset *token.FileSet, file *as
 	return violations
 }
 
-func namedTypePositions(file *ast.File) map[string]token.Pos {
-	positions := make(map[string]token.Pos)
-
-	for _, declaration := range file.Decls {
-		typeDeclaration, ok := declaration.(*ast.GenDecl)
-		if !ok || typeDeclaration.Tok != token.TYPE {
-			continue
-		}
-
-		for _, specification := range typeDeclaration.Specs {
-			typeSpec, ok := specification.(*ast.TypeSpec)
-			if ok {
-				positions[typeSpec.Name.Name] = typeSpec.Pos()
-			}
-		}
-	}
-
-	return positions
-}
-
 func (r *FuncOrderRule) checkDependencyOrdering(fset *token.FileSet, decls []declInfo) []violation.Violation {
 	typeDeclByName := make(map[string]declInfo, len(decls))
 	for _, decl := range decls {
@@ -327,6 +307,26 @@ func (c funcCategory) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+func namedTypePositions(file *ast.File) map[string]token.Pos {
+	positions := make(map[string]token.Pos)
+
+	for _, declaration := range file.Decls {
+		typeDeclaration, ok := declaration.(*ast.GenDecl)
+		if !ok || typeDeclaration.Tok != token.TYPE {
+			continue
+		}
+
+		for _, specification := range typeDeclaration.Specs {
+			typeSpec, ok := specification.(*ast.TypeSpec)
+			if ok {
+				positions[typeSpec.Name.Name] = typeSpec.Pos()
+			}
+		}
+	}
+
+	return positions
 }
 
 func categorizeMethod(name string, recv *ast.FieldList) funcCategory {

@@ -16,9 +16,12 @@ func TestReporterReport_UsesStableJSONSchema(t *testing.T) {
 
 	err := reporter.Report(&output, []violation.Violation{
 		{
-			Rule:     "logging-capitalization",
-			Message:  "Log message should start with an uppercase letter",
-			Position: token.Position{Filename: "main.go", Line: 15, Column: 2},
+			Rule:    "logging-capitalization",
+			Message: "Log message should start with an uppercase letter",
+			Position: token.Position{
+				Filename: "main.go",
+				Line:     15,
+				Column:   2},
 			Severity: violation.SeverityWarning,
 		},
 	})

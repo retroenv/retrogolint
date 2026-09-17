@@ -23,9 +23,12 @@ func TestReport_SingleViolation(t *testing.T) {
 
 	err := reporter.Report(&buf, []violation.Violation{
 		{
-			Rule:     "logging-capitalization",
-			Message:  "Log message should start with an uppercase letter",
-			Position: token.Position{Filename: "main.go", Line: 15, Column: 2},
+			Rule:    "logging-capitalization",
+			Message: "Log message should start with an uppercase letter",
+			Position: token.Position{
+				Filename: "main.go",
+				Line:     15,
+				Column:   2},
 			Severity: violation.SeverityWarning,
 		},
 	})
@@ -43,14 +46,20 @@ func TestReport_MultipleViolations(t *testing.T) {
 
 	violations := []violation.Violation{
 		{
-			Rule:     "rule-a",
-			Message:  "first",
-			Position: token.Position{Filename: "a.go", Line: 1, Column: 1},
+			Rule:    "rule-a",
+			Message: "first",
+			Position: token.Position{
+				Filename: "a.go",
+				Line:     1,
+				Column:   1},
 		},
 		{
-			Rule:     "rule-b",
-			Message:  "second",
-			Position: token.Position{Filename: "b.go", Line: 2, Column: 3},
+			Rule:    "rule-b",
+			Message: "second",
+			Position: token.Position{
+				Filename: "b.go",
+				Line:     2,
+				Column:   3},
 		},
 	}
 	err := reporter.Report(&buf, violations)
