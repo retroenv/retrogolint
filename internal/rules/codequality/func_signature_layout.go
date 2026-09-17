@@ -22,6 +22,11 @@ type functionSignature struct {
 	suffix     string
 }
 
+type functionParameterPart struct {
+	position token.Pos
+	end      token.Pos
+}
+
 // NewFuncSignatureLayoutRule creates a new FuncSignatureLayoutRule.
 func NewFuncSignatureLayoutRule() *FuncSignatureLayoutRule {
 	return &FuncSignatureLayoutRule{}
@@ -34,7 +39,7 @@ func (r *FuncSignatureLayoutRule) Name() string {
 
 // Description returns the rule description.
 func (r *FuncSignatureLayoutRule) Description() string {
-	return "Function signatures should use the available 120 columns and wrap between complete parameters"
+	return "Function signatures should use the available 120 columns and wrap after parameter commas"
 }
 
 // Severity returns the default severity.
@@ -64,7 +69,7 @@ func (r *FuncSignatureLayoutRule) Check(fset *token.FileSet, file *ast.File) []v
 
 		violations = append(violations, violation.Violation{
 			Rule:     r.Name(),
-			Message:  function.Name.Name + ": function signature should use available 120 columns and wrap between complete parameters",
+			Message:  function.Name.Name + ": function signature should use available 120 columns and wrap after parameter commas",
 			Position: fset.Position(function.Name.Pos()),
 			Severity: r.Severity(),
 		})
@@ -93,24 +98,24 @@ func (signature functionSignature) hasValidLayout(fset *token.FileSet, function 
 		return false
 	}
 
-	parameters := function.Type.Params.List
+	parameters := functionParameterParts(function.Type.Params.List)
 	expectedLines := signature.parameterLineIndexes()
 	if len(parameters) != len(expectedLines) {
 		return false
 	}
 
 	for index, parameter := range parameters {
-		if fset.Position(parameter.Pos()).Line != fset.Position(parameter.End()).Line {
+		if fset.Position(parameter.position).Line != fset.Position(parameter.end).Line {
 			return false
 		}
-		if fset.Position(parameter.Pos()).Line != startLine+expectedLines[index] {
+		if fset.Position(parameter.position).Line != startLine+expectedLines[index] {
 			return false
 		}
 	}
 
 	lastParameterLine := fset.Position(function.Type.Params.Opening).Line
 	if len(parameters) > 0 {
-		lastParameterLine = fset.Position(parameters[len(parameters)-1].End()).Line
+		lastParameterLine = fset.Position(parameters[len(parameters)-1].end).Line
 	}
 	if fset.Position(function.Type.Params.Closing).Line != lastParameterLine {
 		return false
@@ -178,8 +183,8 @@ func (signature functionSignature) hasValidResultLayout(fset *token.FileSet, fun
 		return true
 	}
 
-	lastParameter := function.Type.Params.List[len(function.Type.Params.List)-1]
-	lastParameterColumn := fset.Position(lastParameter.Pos()).Column
+	parameters := functionParameterParts(function.Type.Params.List)
+	lastParameterColumn := fset.Position(parameters[len(parameters)-1].position).Column
 	lastLineWidth := lastParameterColumn - 1 + len(signature.parameters[len(signature.parameters)-1]) + len(signature.suffix)
 	if lastLineWidth > maxFunctionDeclarationColumns {
 		return true
@@ -203,7 +208,7 @@ func buildFunctionSignature(function *ast.FuncDecl) functionSignature {
 	}
 	prefix += "("
 
-	parameters := renderFields(function.Type.Params.List)
+	parameters := renderParameterParts(function.Type.Params.List)
 	suffix := renderFunctionSuffix(function)
 
 	return functionSignature{
@@ -211,6 +216,49 @@ func buildFunctionSignature(function *ast.FuncDecl) functionSignature {
 		parameters: parameters,
 		suffix:     suffix,
 	}
+}
+
+func renderParameterParts(fields []*ast.Field) []string {
+	rendered := make([]string, 0, len(fields))
+
+	for _, field := range fields {
+		typeName := types.ExprString(field.Type)
+		if len(field.Names) == 0 {
+			rendered = append(rendered, typeName)
+			continue
+		}
+
+		for index, name := range field.Names {
+			part := name.Name
+			if index == len(field.Names)-1 {
+				part += " " + typeName
+			}
+			rendered = append(rendered, part)
+		}
+	}
+
+	return rendered
+}
+
+func functionParameterParts(fields []*ast.Field) []functionParameterPart {
+	parts := make([]functionParameterPart, 0, len(fields))
+
+	for _, field := range fields {
+		if len(field.Names) == 0 {
+			parts = append(parts, functionParameterPart{position: field.Type.Pos(), end: field.Type.End()})
+			continue
+		}
+
+		for index, name := range field.Names {
+			end := name.End()
+			if index == len(field.Names)-1 {
+				end = field.Type.End()
+			}
+			parts = append(parts, functionParameterPart{position: name.Pos(), end: end})
+		}
+	}
+
+	return parts
 }
 
 func renderFunctionSuffix(function *ast.FuncDecl) string {
@@ -279,7 +327,7 @@ func hasMultilineSignatureField(fset *token.FileSet, function *ast.FuncDecl) boo
 			continue
 		}
 		for _, field := range fields.List {
-			if fset.Position(field.Pos()).Line != fset.Position(field.End()).Line {
+			if fset.Position(field.Type.Pos()).Line != fset.Position(field.Type.End()).Line {
 				return true
 			}
 		}

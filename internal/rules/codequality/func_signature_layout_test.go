@@ -84,12 +84,45 @@ func OptimizeAdjacentValueHomeCoalesceAtBase(logger *log.Logger, sequence machin
 		{
 			name: "result tuple stays with final parameter",
 			code: `package test
-func findDeadTransferBranch(nodes []ast.Node, bridge optmanager.Bridge,
-	includeDead, includeDelayed bool) (int, *deadTransferBranchAlias, bool) {
+func findDeadTransferBranch(nodes []ast.Node, bridge optmanager.Bridge, includeDead,
+	includeDelayed bool) (int, *deadTransferBranchAlias, bool) {
 
 	return 0, nil, false
 }
 `,
+		},
+		{
+			name: "grouped parameter names stay with their type",
+			code: `package test
+func processBenchmarkDocs(entries []string, expected map[string]int, allocExpected,
+	allocatorCycles map[string]map[string]int,
+) ([]string, error) {
+
+	return nil, nil
+}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "grouped parameter names can wrap across lines",
+			code: `package test
+func repeatedValueHomeCandidateValid(nodes []ast.Node, functionStart, functionEnd, duplicateStoreIdx,
+	canonicalStoreIdx int, readers []int, canonicalAddr uint16) bool {
+
+	return false
+}
+`,
+		},
+		{
+			name: "grouped parameter names leave avoidable space",
+			code: `package test
+func repeatedValueHomeCandidateValid(nodes []ast.Node,
+	functionStart, functionEnd, duplicateStoreIdx, canonicalStoreIdx int, readers []int, canonicalAddr uint16) bool {
+
+	return false
+}
+`,
+			wantViolations: 1,
 		},
 		{
 			name: "long signature moves all parameters",
@@ -190,6 +223,18 @@ func Cases() []struct {
 `,
 		},
 		{
+			name: "anonymous struct parameter keeps intrinsic layout",
+			code: `package test
+func Use(value struct {
+	name string
+	want bool
+}) {
+
+	_ = value
+}
+`,
+		},
+		{
 			name: "signature comments are ignored",
 			code: `package test
 func Add(
@@ -219,6 +264,6 @@ func TestFuncSignatureLayoutRule_Metadata(t *testing.T) {
 	rule := NewFuncSignatureLayoutRule()
 
 	assert.Equal(t, "codequality-func-signature-layout", rule.Name())
-	assert.Equal(t, "Function signatures should use the available 120 columns and wrap between complete parameters", rule.Description())
+	assert.Equal(t, "Function signatures should use the available 120 columns and wrap after parameter commas", rule.Description())
 	assert.Equal(t, "codequality", rule.Category())
 }
