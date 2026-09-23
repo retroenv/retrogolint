@@ -2,11 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v1.0.7] - 2026-09-23
 
 Added:
 
 * add `markdown-table-structure` to require markdown table headers, separator rows, and body rows to use the same cell count.
+
+Fixed:
+
+* `collections-set-projection` reports `Set.ToSlice` calls when the receiver is a `retrogolib/set` set, including locally declared set fields and function results. Other types that have a `ToSlice` method do not cause violations.
 
 ## [v1.0.6] - 2026-09-16
 
