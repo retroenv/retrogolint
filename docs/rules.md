@@ -1,6 +1,6 @@
 # Rules
 
-Rules can be selected by exact rule name or by category. Built-in categories are `codequality`, `collections`, `logging`, and `testing`.
+Rules can be selected by exact rule name or by category. Built-in categories are `codequality`, `collections`, `logging`, `markdown`, and `testing`.
 
 ## Code Quality
 
@@ -68,6 +68,31 @@ Prefer:
 logger.Info("Starting server")
 logger.Info("Load", log.String("file_name", name))
 logger.Debug("Handler", log.Hex("addr", address))
+```
+
+## Markdown
+
+| Rule | Severity | Checks |
+|------|----------|--------|
+| `markdown-table-structure` | warning | Table headers, separator rows, and body rows use the same cell count |
+
+A table renders incorrectly when the separator row or a body row has a different
+cell count than the header. The rule ignores tables inside fenced code blocks.
+
+Example:
+
+```markdown
+| Stage | Dependency | Deliverable |
+| --- | --- |
+| 00 | None | Verified baseline |
+```
+
+Prefer:
+
+```markdown
+| Stage | Dependency | Deliverable |
+| --- | --- | --- |
+| 00 | None | Verified baseline |
 ```
 
 ## Testing

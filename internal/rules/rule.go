@@ -14,6 +14,7 @@ import (
 	loggingformatting "github.com/retroenv/retrogolint/internal/rules/logging/formatting"
 	loggingmessage "github.com/retroenv/retrogolint/internal/rules/logging/message"
 	loggingperformance "github.com/retroenv/retrogolint/internal/rules/logging/performance"
+	markdownrules "github.com/retroenv/retrogolint/internal/rules/markdown"
 	linttesting "github.com/retroenv/retrogolint/internal/rules/testing"
 )
 
@@ -42,6 +43,7 @@ func NewRegistry() *Registry {
 	r.Register(collections.NewSetProjectionRule())
 	r.Register(collections.NewSetSortRule())
 	r.Register(linttesting.NewAssertUsageRule())
+	r.Register(markdownrules.NewTableStructureRule())
 	r.Register(codequality.NewFuncOrderRule())
 	r.Register(codequality.NewFuncSignatureLayoutRule())
 	r.Register(codequality.NewParamPriorityRule())

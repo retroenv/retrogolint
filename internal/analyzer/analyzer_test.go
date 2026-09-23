@@ -107,6 +107,38 @@ func example() {
 	assert.Len(t, violations, 0)
 }
 
+func TestAnalyzer_AnalyzeFiles_Markdown(t *testing.T) {
+	tests := []struct {
+		name          string
+		files         []string
+		wantViolation int
+	}{
+		{
+			name:          "markdown file with malformed tables",
+			files:         []string{"../../testdata/invalid/tables.md"},
+			wantViolation: 3,
+		},
+		{
+			name:          "markdown file with valid tables",
+			files:         []string{"../../testdata/valid/tables.md"},
+			wantViolation: 0,
+		},
+	}
+
+	cfg := linterconfig.DefaultConfig()
+	cfg.Rules = []string{"markdown"}
+	a := New(cfg, rules.NewRegistry())
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			violations, err := a.AnalyzeFiles(tt.files)
+
+			assert.NoError(t, err)
+			assert.Len(t, violations, tt.wantViolation)
+		})
+	}
+}
+
 func TestAnalyzer_ExpandPath(t *testing.T) {
 	// Create test config
 	cfg := linterconfig.DefaultConfig()
@@ -124,7 +156,7 @@ func TestAnalyzer_ExpandPath(t *testing.T) {
 			path:      "../../testdata/valid/correct.go",
 			wantError: false,
 			checkFunc: func(files []string) bool {
-				return len(files) == 1 && filepath.Ext(files[0]) == goFileExt
+				return len(files) == 1 && filepath.Ext(files[0]) == linterconfig.GoFileExtension
 			},
 		},
 		{

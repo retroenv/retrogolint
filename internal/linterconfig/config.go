@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/retroenv/retrogolib/config"
@@ -14,6 +15,11 @@ import (
 const (
 	defaultFormat   = "text"
 	defaultSeverity = "warning"
+
+	// GoFileExtension is the extension of analyzed Go source files.
+	GoFileExtension = ".go"
+	// MarkdownFileExtension is the extension of analyzed markdown documents.
+	MarkdownFileExtension = ".md"
 )
 
 // Config holds the linter configuration.
@@ -67,11 +73,17 @@ func (c *Config) ShouldSkipPath(path string) bool {
 		return false
 	}
 
-	if !strings.HasSuffix(path, ".go") {
+	if !IsAnalyzableFile(path) {
 		return true
 	}
 
 	return c.ShouldExcludeFile(path)
+}
+
+// IsAnalyzableFile reports whether the file path has an extension the analyzer processes.
+func IsAnalyzableFile(path string) bool {
+	extension := strings.ToLower(filepath.Ext(path))
+	return extension == GoFileExtension || extension == MarkdownFileExtension
 }
 
 // ValidateFormat checks whether an output format is supported.

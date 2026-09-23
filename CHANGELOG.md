@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Added:
+
+* add `markdown-table-structure` to require markdown table headers, separator rows, and body rows to use the same cell count.
+
 ## [v1.0.6] - 2026-09-16
 
 Added:

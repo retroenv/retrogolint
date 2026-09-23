@@ -26,6 +26,7 @@ A Go static analyzer that enforces conventions for projects built with
 | **Testing** | Manual assertions that can use `retrogolib/assert` |
 | **Collections** | Map-based sets and inefficient `retrogolib/set` operations |
 | **Code quality** | Function signature layout, declaration order, parameter order, parameter type grouping, and exported type names |
+| **Markdown** | Table cell counts in headers, separator rows, and body rows |
 
 See the [rule reference](docs/rules.md) for rule details and examples.
 

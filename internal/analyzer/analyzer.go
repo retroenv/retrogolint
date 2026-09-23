@@ -21,8 +21,6 @@ import (
 	"github.com/retroenv/retrogolint/internal/violation"
 )
 
-const goFileExt = ".go"
-
 // Analyzer performs linting analysis on Go source files.
 type Analyzer struct {
 	config   *linterconfig.Config
@@ -80,8 +78,13 @@ func (a *Analyzer) AnalyzeFiles(paths []string) ([]violation.Violation, error) {
 	return a.filterViolations(filteredByExclusions), nil
 }
 
-// analyzeFile analyzes a single Go source file.
+// analyzeFile analyzes a single source file. Go files are parsed and inspected
+// through the AST. Markdown files are inspected through their raw content.
 func (a *Analyzer) analyzeFile(path string, activeRules []api.Rule) ([]violation.Violation, error) {
+	if filepath.Ext(path) == linterconfig.MarkdownFileExtension {
+		return analyzeMarkdownFile(path, activeRules)
+	}
+
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 	if err != nil {
@@ -94,8 +97,11 @@ func (a *Analyzer) analyzeFile(path string, activeRules []api.Rule) ([]violation
 	var violations []violation.Violation
 
 	for _, rule := range activeRules {
-		ruleViolations := rule.Check(fset, file)
-		violations = append(violations, ruleViolations...)
+		goRule, ok := rule.(api.GoRule)
+		if !ok {
+			continue
+		}
+		violations = append(violations, goRule.Check(fset, file)...)
 	}
 
 	return violations, nil
@@ -181,10 +187,10 @@ func (a *Analyzer) filterViolations(violations []violation.Violation) []violatio
 	return filtered
 }
 
-// expandPath expands a path pattern into a list of Go source files.
+// expandPath expands a path pattern into a list of analyzable source files.
 func (a *Analyzer) expandPath(path string) ([]string, error) {
 	if path == "./..." {
-		return a.findGoFiles(".")
+		return a.findSourceFiles(".")
 	}
 
 	if len(path) > 4 && path[len(path)-4:] == "/..." {
@@ -192,7 +198,7 @@ func (a *Analyzer) expandPath(path string) ([]string, error) {
 		if dir == "" {
 			dir = "."
 		}
-		return a.findGoFiles(dir)
+		return a.findSourceFiles(dir)
 	}
 
 	info, err := os.Stat(path)
@@ -201,18 +207,19 @@ func (a *Analyzer) expandPath(path string) ([]string, error) {
 	}
 
 	if info.IsDir() {
-		return a.findGoFilesInDir(path)
+		return a.findSourceFilesInDir(path)
 	}
 
-	if filepath.Ext(path) == goFileExt {
+	if linterconfig.IsAnalyzableFile(path) {
 		return []string{path}, nil
 	}
 
-	return nil, fmt.Errorf("not a Go file: %s", path)
+	return nil, fmt.Errorf("unsupported file type: %s", path)
 }
 
-// findGoFiles recursively finds all .go files in a directory and its subdirectories.
-func (a *Analyzer) findGoFiles(dir string) ([]string, error) {
+// findSourceFiles recursively finds all analyzable source files in a directory
+// and its subdirectories.
+func (a *Analyzer) findSourceFiles(dir string) ([]string, error) {
 	var files []string
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -232,7 +239,7 @@ func (a *Analyzer) findGoFiles(dir string) ([]string, error) {
 			return nil
 		}
 
-		if filepath.Ext(path) == goFileExt && !a.config.ShouldExcludeFile(path) {
+		if linterconfig.IsAnalyzableFile(path) && !a.config.ShouldExcludeFile(path) {
 			files = append(files, path)
 		}
 
@@ -245,8 +252,8 @@ func (a *Analyzer) findGoFiles(dir string) ([]string, error) {
 	return files, nil
 }
 
-// findGoFilesInDir finds all .go files in a directory (non-recursive).
-func (a *Analyzer) findGoFilesInDir(dir string) ([]string, error) {
+// findSourceFilesInDir finds all analyzable source files in a directory (non-recursive).
+func (a *Analyzer) findSourceFilesInDir(dir string) ([]string, error) {
 	var files []string
 
 	entries, err := os.ReadDir(dir)
@@ -260,7 +267,7 @@ func (a *Analyzer) findGoFilesInDir(dir string) ([]string, error) {
 		}
 
 		path := filepath.Join(dir, entry.Name())
-		if filepath.Ext(path) == goFileExt && !a.config.ShouldExcludeFile(path) {
+		if linterconfig.IsAnalyzableFile(path) && !a.config.ShouldExcludeFile(path) {
 			files = append(files, path)
 		}
 	}
@@ -329,6 +336,26 @@ func (a *Analyzer) getRuleCategory(ruleName string) string {
 type fileAnalysisResult struct {
 	violations []violation.Violation
 	err        error
+}
+
+// analyzeMarkdownFile analyzes a single markdown document.
+func analyzeMarkdownFile(path string, activeRules []api.Rule) ([]violation.Violation, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	var violations []violation.Violation
+
+	for _, rule := range activeRules {
+		fileRule, ok := rule.(api.FileRule)
+		if !ok {
+			continue
+		}
+		violations = append(violations, fileRule.CheckFile(path, content)...)
+	}
+
+	return violations, nil
 }
 
 func sortViolations(violations []violation.Violation) {

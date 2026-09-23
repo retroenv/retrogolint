@@ -15,6 +15,7 @@ const (
 	CategoryLogging     = "logging"
 	CategoryCollections = "collections"
 	CategoryCodeQuality = "codequality"
+	CategoryMarkdown    = "markdown"
 	LogFieldTypeString  = "String"
 	NoLogArgument       = -1
 	PackageLog          = "log"
@@ -27,13 +28,28 @@ type LogCallInfo struct {
 	FieldStartIndex int
 }
 
-// Rule represents a linting rule that can detect violations.
+// Rule holds the metadata that every lint rule provides.
 type Rule interface {
 	Name() string
 	Description() string
 	Severity() violation.Severity
 	Category() string
+}
+
+// GoRule represents a lint rule that inspects one parsed Go source file.
+type GoRule interface {
+	Rule
+
+	// Check returns the violations found in the parsed file.
 	Check(fset *token.FileSet, file *ast.File) []violation.Violation
+}
+
+// FileRule represents a lint rule that inspects one non-Go source file.
+type FileRule interface {
+	Rule
+
+	// CheckFile returns the violations found in the file content.
+	CheckFile(path string, content []byte) []violation.Violation
 }
 
 // IsLoggerMethod checks if a call expression is a logger method call.
