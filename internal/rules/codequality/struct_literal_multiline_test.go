@@ -13,6 +13,7 @@ func TestStructLiteralMultilineRule_Check(t *testing.T) {
 		name           string
 		code           string
 		wantViolations int
+		wantLine       int
 	}{
 		{
 			name: "single-line struct literal with multiple fields",
@@ -27,6 +28,7 @@ func New(memory, fetch any) *CPU {
 }
 `,
 			wantViolations: 1,
+			wantLine:       8,
 		},
 		{
 			name: "multiline struct literal with multiple fields",
@@ -45,6 +47,46 @@ func New(memory, fetch any) *CPU {
 }
 `,
 			wantViolations: 0,
+		},
+		{
+			name: "multiline struct literal with fields on shared lines",
+			code: `package test
+type CPU struct {
+	Core any
+	memory any
+	fetch any
+}
+func New(memory, fetch any) *CPU {
+	return &CPU{
+		Core: new(any), memory: memory,
+		fetch: fetch,
+	}
+}
+`,
+			wantViolations: 1,
+			wantLine:       9,
+		},
+		{
+			name: "nested multiline struct literal with fields on shared lines",
+			code: `package test
+type Memory struct {
+	BasicMemory any
+	Size any
+}
+type CPU struct {
+	Core any
+	memory any
+}
+func New(memory any) *CPU {
+	return &CPU{
+		Core: &Memory{
+			BasicMemory: memory, Size: memory,
+		},
+		memory: memory,
+	}
+}
+`,
+			wantViolations: 1,
 		},
 		{
 			name: "single-field struct literal",
@@ -115,6 +157,9 @@ var pair = Pair[int]{Left: 1, Right: 2}
 
 			violations := rule.Check(fset, file)
 			assert.Len(t, violations, tt.wantViolations)
+			if tt.wantLine > 0 && len(violations) > 0 {
+				assert.Equal(t, tt.wantLine, violations[0].Position.Line)
+			}
 		})
 	}
 }
