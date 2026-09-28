@@ -49,6 +49,19 @@ func New(memory, fetch any) *CPU {
 			wantViolations: 0,
 		},
 		{
+			name: "first field shares line with opening brace",
+			code: `package test
+type Operands struct { Size int; Source, Destination *int }
+func BinaryOperands(size int, source, destination *int) Operands {
+	return Operands{Size: size,
+		Source: source,
+		Destination: destination}
+}
+`,
+			wantViolations: 1,
+			wantLine:       4,
+		},
+		{
 			name: "multiline struct literal with fields on shared lines",
 			code: `package test
 type CPU struct {

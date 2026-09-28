@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 Changed:
 
-* `codequality-struct-literal-multiline` now requires one field per line in a keyed struct literal with two or more fields. It reports the second field when two fields share a line.
+* `codequality-struct-literal-multiline` now requires keyed struct literals with two or more fields to start the first field on a new line and put each field on its own line.
 
 ## [v1.0.7] - 2026-09-23
 

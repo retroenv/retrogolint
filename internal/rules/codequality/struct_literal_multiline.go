@@ -8,7 +8,7 @@ import (
 	"github.com/retroenv/retrogolint/internal/violation"
 )
 
-// StructLiteralMultilineRule detects multi-field struct literals that keep more than one field on a line.
+// StructLiteralMultilineRule detects multi-field struct literals with fields on the same line as the opening brace or another field.
 type StructLiteralMultilineRule struct{}
 
 // NewStructLiteralMultilineRule creates a new StructLiteralMultilineRule.
@@ -23,7 +23,7 @@ func (r *StructLiteralMultilineRule) Name() string {
 
 // Description returns the rule description.
 func (r *StructLiteralMultilineRule) Description() string {
-	return "Struct literals with multiple fields should use one line per field"
+	return "Struct literals with multiple fields should start fields on a new line and use one line per field"
 }
 
 // Severity returns the default severity.
@@ -36,7 +36,7 @@ func (r *StructLiteralMultilineRule) Category() string {
 	return api.CategoryCodeQuality
 }
 
-// Check analyzes a file for multi-field struct literals that use more than one field on a line.
+// Check analyzes a file for multi-field struct literals that do not put the first field on a new line or put two fields on one line.
 func (r *StructLiteralMultilineRule) Check(fset *token.FileSet, file *ast.File) []violation.Violation {
 	var violations []violation.Violation
 
@@ -53,7 +53,7 @@ func (r *StructLiteralMultilineRule) Check(fset *token.FileSet, file *ast.File) 
 
 		violations = append(violations, violation.Violation{
 			Rule:     r.Name(),
-			Message:  "struct literal fields should use one line per field",
+			Message:  "struct literal fields should start on a new line and use one line per field",
 			Position: fset.Position(fieldPos),
 			Severity: r.Severity(),
 		})
@@ -64,8 +64,12 @@ func (r *StructLiteralMultilineRule) Check(fset *token.FileSet, file *ast.File) 
 	return violations
 }
 
-// sharedLineFieldPos returns the position of a field that shares a line with the previous field.
+// sharedLineFieldPos returns the position of a field that shares a line with the opening brace or the previous field.
 func sharedLineFieldPos(fset *token.FileSet, literal *ast.CompositeLit) token.Pos {
+	if fset.Position(literal.Lbrace).Line == fset.Position(literal.Elts[0].Pos()).Line {
+		return literal.Elts[0].Pos()
+	}
+
 	for i := 1; i < len(literal.Elts); i++ {
 		previousLine := fset.Position(literal.Elts[i-1].End()).Line
 		currentLine := fset.Position(literal.Elts[i].Pos()).Line
