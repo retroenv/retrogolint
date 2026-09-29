@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 Changed:
 
+* `codequality-func-signature-layout` now also checks function type declarations such as `type Handler func(...)` and applies the same 120-column wrapping rules used for function and method signatures.
 * `codequality-struct-literal-multiline` now requires keyed struct literals with two or more fields to start the first field on a new line and put each field on its own line.
 
 ## [v1.0.7] - 2026-09-23

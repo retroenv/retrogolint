@@ -43,7 +43,12 @@ func (r *ParamTypeCombineRule) Check(fset *token.FileSet, file *ast.File) []viol
 
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
-		if !ok || function.Type.Params == nil || hasSignatureComments(file, function) {
+		if !ok || function.Type.Params == nil {
+			continue
+		}
+
+		end := signatureEnd(function.Type, function.Body)
+		if hasSignatureComments(file, function.Type.Func, end) {
 			continue
 		}
 

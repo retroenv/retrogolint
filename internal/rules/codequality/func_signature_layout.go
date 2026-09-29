@@ -41,36 +41,101 @@ func (r *FuncSignatureLayoutRule) Category() string {
 	return api.CategoryCodeQuality
 }
 
-// Check analyzes function and method signature layout.
+// Check analyzes function, method, and function type signature layout.
 func (r *FuncSignatureLayoutRule) Check(fset *token.FileSet, file *ast.File) []violation.Violation {
 	var violations []violation.Violation
 
 	for _, declaration := range file.Decls {
-		function, ok := declaration.(*ast.FuncDecl)
-		if !ok || hasSignatureComments(file, function) {
-			continue
+		switch decl := declaration.(type) {
+		case *ast.FuncDecl:
+			violations = append(violations, r.checkFunctionDeclaration(fset, file, decl)...)
+		case *ast.GenDecl:
+			violations = append(violations, r.checkTypeDeclarations(fset, file, decl)...)
 		}
-
-		signature := buildFunctionSignature(function)
-		if signature.hasValidLayout(fset, function) {
-			continue
-		}
-
-		violations = append(violations, violation.Violation{
-			Rule:     r.Name(),
-			Message:  function.Name.Name + ": function signature should use available 120 columns and wrap after parameter commas",
-			Position: fset.Position(function.Name.Pos()),
-			Severity: r.Severity(),
-		})
 	}
 
 	return violations
 }
 
+// checkFunctionDeclaration returns a violation when a function or method signature has an invalid layout.
+func (r *FuncSignatureLayoutRule) checkFunctionDeclaration(fset *token.FileSet, file *ast.File,
+	function *ast.FuncDecl) []violation.Violation {
+
+	return r.checkSignature(fset, file, signatureTarget{
+		signature:  buildFunctionSignature(function),
+		funcType:   function.Type,
+		receiver:   function.Recv,
+		typeParams: function.Type.TypeParams,
+		end:        signatureEnd(function.Type, function.Body),
+		position:   function.Name.Pos(),
+		name:       function.Name.Name,
+	})
+}
+
+// checkTypeDeclarations returns violations for function type declarations in a declaration group.
+func (r *FuncSignatureLayoutRule) checkTypeDeclarations(fset *token.FileSet, file *ast.File,
+	declaration *ast.GenDecl) []violation.Violation {
+
+	var violations []violation.Violation
+
+	for _, specification := range declaration.Specs {
+		typeSpec, ok := specification.(*ast.TypeSpec)
+		if !ok {
+			continue
+		}
+		funcType, ok := typeSpec.Type.(*ast.FuncType)
+		if !ok {
+			continue
+		}
+
+		violations = append(violations, r.checkSignature(fset, file, signatureTarget{
+			signature:  buildTypeSignature(fset, declaration, typeSpec, funcType),
+			funcType:   funcType,
+			typeParams: typeSpec.TypeParams,
+			end:        signatureEnd(funcType, nil),
+			position:   typeSpec.Name.Pos(),
+			name:       typeSpec.Name.Name,
+		})...)
+	}
+
+	return violations
+}
+
+// checkSignature returns a violation when the target signature has an invalid layout.
+func (r *FuncSignatureLayoutRule) checkSignature(fset *token.FileSet, file *ast.File,
+	target signatureTarget) []violation.Violation {
+
+	if hasSignatureComments(file, target.funcType.Func, target.end) ||
+		target.signature.hasValidLayout(fset, target.funcType, target.receiver, target.typeParams, target.end) {
+
+		return nil
+	}
+
+	return []violation.Violation{{
+		Rule:     r.Name(),
+		Message:  target.name + ": function signature should use available 120 columns and wrap after parameter commas",
+		Position: fset.Position(target.position),
+		Severity: r.Severity(),
+	}}
+}
+
+// signatureTarget identifies one function signature to check.
+type signatureTarget struct {
+	signature  functionSignature
+	funcType   *ast.FuncType
+	receiver   *ast.FieldList
+	typeParams *ast.FieldList
+	end        token.Pos
+
+	name     string
+	position token.Pos
+}
+
 type functionSignature struct {
-	prefix     string
-	parameters []string
-	suffix     string
+	prefixWidth       int
+	continuationWidth int
+	parameters        []string
+	suffix            string
 }
 
 type functionParameterPart struct {
@@ -78,14 +143,16 @@ type functionParameterPart struct {
 	end      token.Pos
 }
 
-func (signature functionSignature) hasValidLayout(fset *token.FileSet, function *ast.FuncDecl) bool {
-	if hasMultilineSignatureField(fset, function) {
+func (signature functionSignature) hasValidLayout(fset *token.FileSet, funcType *ast.FuncType, receiver,
+	typeParams *ast.FieldList, end token.Pos) bool {
+
+	if hasMultilineSignatureField(fset, receiver, typeParams, funcType) {
 		return true
 	}
 
-	startLine := fset.Position(function.Type.Func).Line
-	endLine := fset.Position(functionSignatureEnd(function)).Line
-	fullWidth := len(signature.prefix) + len(strings.Join(signature.parameters, ", ")) + len(signature.suffix)
+	startLine := fset.Position(funcType.Func).Line
+	endLine := fset.Position(end).Line
+	fullWidth := signature.prefixWidth + len(strings.Join(signature.parameters, ", ")) + len(signature.suffix)
 
 	if fullWidth <= maxFunctionDeclarationColumns {
 		return startLine == endLine
@@ -94,11 +161,11 @@ func (signature functionSignature) hasValidLayout(fset *token.FileSet, function 
 	if startLine == endLine {
 		return signature.requiresIndivisibleOverrun()
 	}
-	if fset.Position(function.Type.Params.Opening).Line != startLine {
+	if fset.Position(funcType.Params.Opening).Line != startLine {
 		return false
 	}
 
-	parameters := functionParameterParts(function.Type.Params.List)
+	parameters := functionParameterParts(funcType.Params.List)
 	expectedLines := signature.parameterLineIndexes()
 	if len(parameters) != len(expectedLines) {
 		return false
@@ -113,15 +180,15 @@ func (signature functionSignature) hasValidLayout(fset *token.FileSet, function 
 		}
 	}
 
-	lastParameterLine := fset.Position(function.Type.Params.Opening).Line
+	lastParameterLine := fset.Position(funcType.Params.Opening).Line
 	if len(parameters) > 0 {
 		lastParameterLine = fset.Position(parameters[len(parameters)-1].end).Line
 	}
-	if fset.Position(function.Type.Params.Closing).Line != lastParameterLine {
+	if fset.Position(funcType.Params.Closing).Line != lastParameterLine {
 		return false
 	}
 
-	return signature.hasValidResultLayout(fset, function, lastParameterLine)
+	return signature.hasValidResultLayout(fset, funcType, lastParameterLine)
 }
 
 func (signature functionSignature) requiresIndivisibleOverrun() bool {
@@ -130,13 +197,13 @@ func (signature functionSignature) requiresIndivisibleOverrun() bool {
 	}
 
 	lastParameter := signature.parameters[len(signature.parameters)-1]
-	return 1+len(lastParameter)+len(signature.suffix) > maxFunctionDeclarationColumns
+	return signature.continuationWidth+len(lastParameter)+len(signature.suffix) > maxFunctionDeclarationColumns
 }
 
 func (signature functionSignature) parameterLineIndexes() []int {
 	lines := make([]int, len(signature.parameters))
 	lineIndex := 0
-	lineWidth := len(signature.prefix)
+	lineWidth := signature.prefixWidth
 	parametersOnLine := 0
 
 	for index, parameter := range signature.parameters {
@@ -152,7 +219,7 @@ func (signature functionSignature) parameterLineIndexes() []int {
 		candidateWidth := lineWidth + separatorWidth + len(parameter) + endingWidth
 		if candidateWidth > maxFunctionDeclarationColumns && (lineIndex == 0 || parametersOnLine > 0) {
 			lineIndex++
-			lineWidth = 1
+			lineWidth = signature.continuationWidth
 			parametersOnLine = 0
 			separatorWidth = 0
 		}
@@ -169,29 +236,29 @@ func (signature functionSignature) parameterClosingSuffix(parameter string) stri
 	if signature.suffix == ")" || signature.suffix == ") {" {
 		return signature.suffix
 	}
-	if 1+len(parameter)+len(signature.suffix) <= maxFunctionDeclarationColumns {
+	if signature.continuationWidth+len(parameter)+len(signature.suffix) <= maxFunctionDeclarationColumns {
 		return signature.suffix
 	}
 
 	return ")"
 }
 
-func (signature functionSignature) hasValidResultLayout(fset *token.FileSet, function *ast.FuncDecl,
+func (signature functionSignature) hasValidResultLayout(fset *token.FileSet, funcType *ast.FuncType,
 	lastParameterLine int) bool {
 
-	if function.Type.Results == nil || len(function.Type.Params.List) == 0 {
+	if funcType.Results == nil || len(funcType.Params.List) == 0 {
 		return true
 	}
 
-	parameters := functionParameterParts(function.Type.Params.List)
+	parameters := functionParameterParts(funcType.Params.List)
 	lastParameterColumn := fset.Position(parameters[len(parameters)-1].position).Column
 	lastLineWidth := lastParameterColumn - 1 + len(signature.parameters[len(signature.parameters)-1]) + len(signature.suffix)
 	if lastLineWidth > maxFunctionDeclarationColumns {
 		return true
 	}
 
-	return fset.Position(function.Type.Results.Pos()).Line == lastParameterLine &&
-		fset.Position(function.Type.End()).Line == lastParameterLine
+	return fset.Position(funcType.Results.Pos()).Line == lastParameterLine &&
+		fset.Position(funcType.End()).Line == lastParameterLine
 }
 
 func buildFunctionSignature(function *ast.FuncDecl) functionSignature {
@@ -209,12 +276,32 @@ func buildFunctionSignature(function *ast.FuncDecl) functionSignature {
 	prefix += "("
 
 	parameters := renderParameterParts(function.Type.Params.List)
-	suffix := renderFunctionSuffix(function)
+	suffix := renderSignatureSuffix(function.Type, function.Body != nil)
 
 	return functionSignature{
-		prefix:     prefix,
-		parameters: parameters,
-		suffix:     suffix,
+		prefixWidth:       len(prefix),
+		continuationWidth: 1,
+		parameters:        parameters,
+		suffix:            suffix,
+	}
+}
+
+func buildTypeSignature(fset *token.FileSet, declaration *ast.GenDecl, typeSpec *ast.TypeSpec,
+	funcType *ast.FuncType) functionSignature {
+
+	continuationWidth := 1
+	if declaration.Lparen.IsValid() {
+		continuationWidth = fset.Position(typeSpec.Name.Pos()).Column
+	}
+
+	parameters := renderParameterParts(funcType.Params.List)
+	suffix := renderSignatureSuffix(funcType, false)
+
+	return functionSignature{
+		prefixWidth:       fset.Position(funcType.Params.Opening).Column,
+		continuationWidth: continuationWidth,
+		parameters:        parameters,
+		suffix:            suffix,
 	}
 }
 
@@ -265,18 +352,18 @@ func functionParameterParts(fields []*ast.Field) []functionParameterPart {
 	return parts
 }
 
-func renderFunctionSuffix(function *ast.FuncDecl) string {
+func renderSignatureSuffix(funcType *ast.FuncType, hasBody bool) string {
 	suffix := ")"
-	if function.Type.Results != nil {
-		results := renderFields(function.Type.Results.List)
+	if funcType.Results != nil {
+		results := renderFields(funcType.Results.List)
 
-		if len(function.Type.Results.List) == 1 && len(function.Type.Results.List[0].Names) == 0 {
+		if len(funcType.Results.List) == 1 && len(funcType.Results.List[0].Names) == 0 {
 			suffix += " " + results[0]
 		} else {
 			suffix += " (" + strings.Join(results, ", ") + ")"
 		}
 	}
-	if function.Body != nil {
+	if hasBody {
 		suffix += " {"
 	}
 
@@ -303,11 +390,9 @@ func renderFields(fields []*ast.Field) []string {
 	return rendered
 }
 
-func hasSignatureComments(file *ast.File, function *ast.FuncDecl) bool {
-	end := functionSignatureEnd(function)
-
+func hasSignatureComments(file *ast.File, start, end token.Pos) bool {
 	for _, comment := range file.Comments {
-		if comment.Pos() > function.Type.Func && comment.Pos() < end {
+		if comment.Pos() > start && comment.Pos() < end {
 			return true
 		}
 	}
@@ -315,16 +400,16 @@ func hasSignatureComments(file *ast.File, function *ast.FuncDecl) bool {
 	return false
 }
 
-func functionSignatureEnd(function *ast.FuncDecl) token.Pos {
-	if function.Body != nil {
-		return function.Body.Lbrace
+func signatureEnd(funcType *ast.FuncType, body *ast.BlockStmt) token.Pos {
+	if body != nil {
+		return body.Lbrace
 	}
 
-	return function.Type.End() - 1
+	return funcType.End() - 1
 }
 
-func hasMultilineSignatureField(fset *token.FileSet, function *ast.FuncDecl) bool {
-	fieldLists := []*ast.FieldList{function.Recv, function.Type.TypeParams, function.Type.Params, function.Type.Results}
+func hasMultilineSignatureField(fset *token.FileSet, receiver, typeParams *ast.FieldList, funcType *ast.FuncType) bool {
+	fieldLists := []*ast.FieldList{receiver, typeParams, funcType.Params, funcType.Results}
 
 	for _, fields := range fieldLists {
 		if fields == nil {
