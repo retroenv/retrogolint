@@ -249,6 +249,7 @@ func (r *LoggingSpecializedFieldRule) collectTypedIdents(fn *ast.FuncDecl) map[s
 			if decl, ok := stmt.Decl.(*ast.GenDecl); ok {
 				r.collectVarDecl(decl, typed)
 			}
+
 		case *ast.GenDecl:
 			r.collectVarDecl(stmt, typed)
 		}

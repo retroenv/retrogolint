@@ -11,6 +11,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
 | `codequality-param-type-combine` | warning | Consecutive function parameters with the same type share one type declaration |
 | `codequality-struct-literal-multiline` | warning | Keyed struct literals with two or more fields start fields on a new line and use one line per field |
+| `codequality-switch-case-separation` | warning | Switch, type switch, and select cases with multiline bodies are separated from adjacent cases by an empty line; comment lines do not count as empty lines; cases with single-line bodies can stay adjacent, and empty bodies and `fallthrough` bodies keep the next case attached |
 | `codequality-type-stutter` | warning | Exported type names do not repeat the package name |
 
 `codequality-funcorder` ignores `init` functions and `_test.go` files.

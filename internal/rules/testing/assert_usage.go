@@ -415,6 +415,7 @@ func (r *AssertUsageRule) exprToString(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.BasicLit:
 		return e.Value
+
 	case *ast.CallExpr:
 		if ident, ok := e.Fun.(*ast.Ident); ok && ident.Name == "len" && len(e.Args) == 1 {
 			return "len(" + r.exprToString(e.Args[0]) + ")"

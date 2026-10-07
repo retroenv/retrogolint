@@ -49,6 +49,7 @@ func NewRegistry() *Registry {
 	r.Register(codequality.NewParamPriorityRule())
 	r.Register(codequality.NewParamTypeCombineRule())
 	r.Register(codequality.NewStructLiteralMultilineRule())
+	r.Register(codequality.NewSwitchCaseSeparationRule())
 	r.Register(codequality.NewTypeStutterRule())
 
 	return r

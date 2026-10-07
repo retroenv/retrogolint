@@ -262,10 +262,12 @@ func ExprToString(expr ast.Expr) string {
 	switch e := expr.(type) {
 	case *ast.Ident:
 		return e.Name
+
 	case *ast.SelectorExpr:
 		if left := ExprToString(e.X); left != "" {
 			return left + "." + e.Sel.Name
 		}
+
 	case *ast.ParenExpr:
 		return ExprToString(e.X)
 	case *ast.StarExpr:

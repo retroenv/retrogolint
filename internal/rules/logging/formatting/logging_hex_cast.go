@@ -120,6 +120,7 @@ func unwrapExpr(expr ast.Expr) ast.Expr {
 		case *ast.ParenExpr:
 			expr = e.X
 			continue
+
 		case *ast.StarExpr:
 			expr = e.X
 			continue

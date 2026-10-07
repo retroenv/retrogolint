@@ -101,6 +101,7 @@ func newSetProjectionSource(fset *token.FileSet, file *ast.File) *setProjectionS
 			names = []*ast.Ident{declaration.Name}
 		case *ast.ValueSpec:
 			names = declaration.Names
+
 		case *ast.AssignStmt:
 			for _, left := range declaration.Lhs {
 				if name, ok := left.(*ast.Ident); ok {
@@ -130,13 +131,16 @@ func (source *setProjectionSource) isReceiver(expr ast.Expr, seen set.Set[types.
 		return source.isReceiver(expr.X, seen)
 	case *ast.CompositeLit:
 		return source.isReceiver(expr.Type, seen)
+
 	case *ast.SelectorExpr:
 		if expr.Sel.Name == "Set" && source.isPackage(expr.X) {
 			return true
 		}
 		return source.isReceiver(expr.Sel, seen)
+
 	case *ast.CallExpr:
 		return source.isConstructor(expr, seen)
+
 	case *ast.Ident:
 		object := source.info.ObjectOf(expr)
 		if object == nil || seen.Contains(object) {
@@ -144,6 +148,7 @@ func (source *setProjectionSource) isReceiver(expr ast.Expr, seen set.Set[types.
 		}
 		seen.Add(object)
 		return source.isDeclaration(object, seen)
+
 	default:
 		return false
 	}
@@ -155,9 +160,11 @@ func (source *setProjectionSource) isDeclaration(object types.Object, seen set.S
 		return source.isReceiver(declaration.Type, seen)
 	case *ast.TypeSpec:
 		return declaration.Assign.IsValid() && source.isReceiver(declaration.Type, seen)
+
 	case *ast.FuncDecl:
 		results := declaration.Type.Results
 		return results != nil && len(results.List) == 1 && source.isReceiver(results.List[0].Type, seen)
+
 	case *ast.ValueSpec:
 		if declaration.Type != nil {
 			return source.isReceiver(declaration.Type, seen)
@@ -167,6 +174,7 @@ func (source *setProjectionSource) isDeclaration(object types.Object, seen set.S
 				return source.isReceiver(declaration.Values[index], seen)
 			}
 		}
+
 	case *ast.AssignStmt:
 		return source.isAssignment(object, declaration, seen)
 	}

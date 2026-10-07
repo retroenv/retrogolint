@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v1.0.8] - 2026-10-07
+
+Added:
+
+* add `codequality-switch-case-separation` to require switch, type switch, and select cases with multiline bodies to be separated from adjacent cases by an empty line.
 
 Changed:
 

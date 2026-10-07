@@ -55,6 +55,7 @@ func (r *FuncOrderRule) Check(fset *token.FileSet, file *ast.File) []violation.V
 			if info, ok := r.categorizeFunc(d); ok {
 				decls = append(decls, info)
 			}
+
 		case *ast.GenDecl:
 			if info, ok := r.categorizeTypeDecl(d); ok {
 				decls = append(decls, info)

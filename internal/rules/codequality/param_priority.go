@@ -138,10 +138,12 @@ func resolveTypeName(expr ast.Expr) string {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		return t.Name
+
 	case *ast.SelectorExpr:
 		if ident, ok := t.X.(*ast.Ident); ok {
 			return ident.Name + "." + t.Sel.Name
 		}
+
 	case *ast.StarExpr:
 		return resolveTypeName(t.X)
 	}
