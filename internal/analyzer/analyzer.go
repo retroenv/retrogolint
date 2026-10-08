@@ -81,7 +81,7 @@ func (a *Analyzer) AnalyzeFiles(paths []string) ([]violation.Violation, error) {
 // analyzeFile analyzes a single source file. Go files are parsed and inspected
 // through the AST. Markdown files are inspected through their raw content.
 func (a *Analyzer) analyzeFile(path string, activeRules []api.Rule) ([]violation.Violation, error) {
-	if filepath.Ext(path) == linterconfig.MarkdownFileExtension {
+	if strings.EqualFold(filepath.Ext(path), linterconfig.MarkdownFileExtension) {
 		return analyzeMarkdownFile(path, activeRules)
 	}
 

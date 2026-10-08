@@ -123,6 +123,11 @@ func TestAnalyzer_AnalyzeFiles_Markdown(t *testing.T) {
 			files:         []string{"../../testdata/valid/tables.md"},
 			wantViolation: 0,
 		},
+		{
+			name:          "markdown file with uppercase extension",
+			files:         []string{"../../testdata/invalid/tables_upper.MD"},
+			wantViolation: 3,
+		},
 	}
 
 	cfg := linterconfig.DefaultConfig()
