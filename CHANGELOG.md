@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.10] - 2026-10-20
+
+Added:
+
+* add `codequality-inline-interface` to require non-empty interface types written inline, such as in type assertions, parameters, and struct fields, to be declared as named types. Empty interfaces, named interface declarations, and type parameter constraints are not reported.
+
 ## [v1.0.9] - 2026-10-08
 
 Fixed:

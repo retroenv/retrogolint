@@ -8,6 +8,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 |------|----------|--------|
 | `codequality-func-signature-layout` | warning | Function, method, and function type signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
+| `codequality-inline-interface` | warning | Non-empty interface types written inline, such as in type assertions, parameters, results, and fields, are declared as named types; empty interfaces, named interface declarations, and type parameter constraints are not reported |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
 | `codequality-param-type-combine` | warning | Consecutive function parameters with the same type share one type declaration |
 | `codequality-struct-literal-multiline` | warning | Keyed struct literals with two or more fields start fields on a new line and use one line per field |
@@ -29,6 +30,16 @@ type Service struct {
 }
 
 func (s *Service) Tick(m dep) {}
+```
+
+`codequality-inline-interface` reports the first form and accepts the second:
+
+```go
+resolver, ok := v.(interface{ Resolve(uint16) (int, bool) })
+
+type resolver interface{ Resolve(uint16) (int, bool) }
+
+r, ok := v.(resolver)
 ```
 
 ## Collections
