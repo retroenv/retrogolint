@@ -55,6 +55,7 @@ func (r *SetProjectionRule) Check(fset *token.FileSet, file *ast.File) []violati
 		if !ok || len(call.Args) != 0 || !isToSliceCall(call) {
 			return true
 		}
+
 		selector := call.Fun.(*ast.SelectorExpr)
 		if !source.isReceiver(selector.X, set.New[types.Object]()) {
 			return true
@@ -109,13 +110,16 @@ func newSetProjectionSource(fset *token.FileSet, file *ast.File) *setProjectionS
 				}
 			}
 		}
+
 		for _, name := range names {
 			if object := source.info.Defs[name]; object != nil {
 				source.declarations[object] = node
 			}
 		}
+
 		return true
 	})
+
 	return source
 }
 
@@ -136,6 +140,7 @@ func (source *setProjectionSource) isReceiver(expr ast.Expr, seen set.Set[types.
 		if expr.Sel.Name == "Set" && source.isPackage(expr.X) {
 			return true
 		}
+
 		return source.isReceiver(expr.Sel, seen)
 
 	case *ast.CallExpr:
@@ -146,7 +151,9 @@ func (source *setProjectionSource) isReceiver(expr ast.Expr, seen set.Set[types.
 		if object == nil || seen.Contains(object) {
 			return false
 		}
+
 		seen.Add(object)
+
 		return source.isDeclaration(object, seen)
 
 	default:
@@ -169,6 +176,7 @@ func (source *setProjectionSource) isDeclaration(object types.Object, seen set.S
 		if declaration.Type != nil {
 			return source.isReceiver(declaration.Type, seen)
 		}
+
 		for index, name := range declaration.Names {
 			if source.info.ObjectOf(name) == object && index < len(declaration.Values) {
 				return source.isReceiver(declaration.Values[index], seen)
@@ -178,6 +186,7 @@ func (source *setProjectionSource) isDeclaration(object types.Object, seen set.S
 	case *ast.AssignStmt:
 		return source.isAssignment(object, declaration, seen)
 	}
+
 	return false
 }
 
@@ -186,14 +195,17 @@ func (source *setProjectionSource) isConstructor(call *ast.CallExpr, seen set.Se
 	if indexed, ok := function.(*ast.IndexExpr); ok {
 		function = indexed.X
 	}
+
 	if identifier, ok := function.(*ast.Ident); ok {
 		if identifier.Name == "make" && source.info.ObjectOf(identifier) == types.Universe.Lookup("make") &&
 			len(call.Args) != 0 {
 
 			return source.isReceiver(call.Args[0], seen)
 		}
+
 		return source.isReceiver(identifier, seen)
 	}
+
 	selector, ok := function.(*ast.SelectorExpr)
 	if !ok {
 		return false
@@ -204,6 +216,7 @@ func (source *setProjectionSource) isConstructor(call *ast.CallExpr, seen set.Se
 	if source.isReceiver(selector.Sel, seen) {
 		return true
 	}
+
 	switch selector.Sel.Name {
 	case "Copy", "Union", "Intersection", "Difference", "SymmetricDifference":
 		return source.isReceiver(selector.X, seen)
@@ -217,7 +230,9 @@ func (source *setProjectionSource) isPackage(expr ast.Expr) bool {
 	if !ok {
 		return false
 	}
+
 	name, ok := source.info.ObjectOf(identifier).(*types.PkgName)
+
 	return ok && name.Imported().Path() == retrogolibSetImportPath
 }
 
@@ -230,6 +245,7 @@ func (source *setProjectionSource) isAssignment(object types.Object, assignment 
 			return source.isReceiver(assignment.Rhs[index], seen)
 		}
 	}
+
 	return false
 }
 

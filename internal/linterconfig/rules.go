@@ -59,6 +59,7 @@ func ParseRules(s string) []string {
 			rules = append(rules, trimmed)
 		}
 	}
+
 	return rules
 }
 
@@ -83,6 +84,7 @@ func filePatternMatches(pattern, filePath string) bool {
 		if trimmed == filePath {
 			break
 		}
+
 		filePath = trimmed
 	}
 
@@ -91,6 +93,7 @@ func filePatternMatches(pattern, filePath string) bool {
 		if idx == -1 {
 			return false
 		}
+
 		filePath = filePath[idx+1:]
 
 		matched, err := path.Match(pattern, filePath)
@@ -140,11 +143,13 @@ func parseRuleSectionHeader(line string) (string, bool) {
 	if !strings.HasPrefix(line, "[rule.") || !strings.HasSuffix(line, "]") {
 		return "", false
 	}
+
 	ruleName := strings.TrimPrefix(line, "[rule.")
 	ruleName = strings.TrimSuffix(ruleName, "]")
 	if ruleName == "" {
 		return "", false
 	}
+
 	return ruleName, true
 }
 
@@ -161,6 +166,7 @@ func shouldSkipLine(line, currentRule string) bool {
 	if line == "" {
 		return true
 	}
+
 	return strings.HasPrefix(line, "#") || strings.HasPrefix(line, ";")
 }
 
@@ -169,13 +175,16 @@ func parseKeyValue(line string) (key, value string, ok bool) {
 	if !strings.Contains(line, "=") {
 		return "", "", false
 	}
+
 	parts := strings.SplitN(line, "=", 2)
 	if len(parts) != 2 {
 		return "", "", false
 	}
+
 	key = strings.TrimSpace(parts[0])
 	value = strings.TrimSpace(parts[1])
 	key = strings.ReplaceAll(key, "_", "-")
+
 	return key, value, true
 }
 
@@ -190,5 +199,6 @@ func updateRuleConfig(result map[string]RuleFileConfig, ruleName, key, value str
 	case "exclude-files":
 		ruleCfg.ExcludeFiles = value
 	}
+
 	result[ruleName] = ruleCfg
 }

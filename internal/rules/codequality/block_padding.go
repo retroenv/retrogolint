@@ -109,8 +109,8 @@ func (r *BlockPaddingRule) violation(fset *token.FileSet, pos token.Pos, message
 }
 
 // markMultilineHeader records the body of a construct whose header spans more than one line.
-func markMultilineHeader(fset *token.FileSet, headers map[*ast.BlockStmt]string, body *ast.BlockStmt,
-	header ast.Node, name string) {
+func markMultilineHeader(fset *token.FileSet, headers map[*ast.BlockStmt]string, body *ast.BlockStmt, header ast.Node,
+	name string) {
 
 	if body == nil {
 		return

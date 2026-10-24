@@ -78,6 +78,7 @@ func test(address uint16) {
 					t.Logf("Violation %d: %s at %v", i+1, v.Message, v.Position)
 				}
 			}
+
 			assert.Len(t, violations, tt.wantViolations)
 
 			for _, v := range violations {

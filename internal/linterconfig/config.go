@@ -139,6 +139,7 @@ func ApplyFileConfig(cfg *Config, fileCfg FileConfig) error {
 	if err := ValidateFormat(fileCfg.Format); err != nil {
 		return err
 	}
+
 	cfg.Format = fileCfg.Format
 
 	switch fileCfg.Severity {
@@ -154,6 +155,7 @@ func ApplyFileConfig(cfg *Config, fileCfg FileConfig) error {
 	if fileCfg.MaxPerRule < 0 {
 		return fmt.Errorf("max-per-rule must be >= 0, got %d", fileCfg.MaxPerRule)
 	}
+
 	cfg.MaxPerRule = fileCfg.MaxPerRule
 	cfg.ExcludeTests = fileCfg.ExcludeTests
 	cfg.ExcludeDirs = ParseRules(fileCfg.ExcludeDirs)

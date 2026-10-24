@@ -125,6 +125,7 @@ func unwrapExpr(expr ast.Expr) ast.Expr {
 			expr = e.X
 			continue
 		}
+
 		break
 	}
 

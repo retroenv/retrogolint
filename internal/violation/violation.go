@@ -62,6 +62,7 @@ func (s Severity) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal severity: %w", err)
 	}
+
 	return data, nil
 }
 

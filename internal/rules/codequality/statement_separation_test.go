@@ -495,6 +495,7 @@ func runStatementSeparationTests(t *testing.T, tests []statementSeparationTest) 
 			for _, v := range violations {
 				lines = append(lines, v.Position.Line)
 			}
+
 			assert.Len(t, lines, len(tt.wantLines))
 			for index, line := range tt.wantLines {
 				assert.Equal(t, line, lines[index])

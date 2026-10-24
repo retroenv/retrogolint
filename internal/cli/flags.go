@@ -28,6 +28,7 @@ func ParseFlags(version, commit, date string) (*linterconfig.Config, []string, e
 		flagSet.ShowUsage()
 		os.Exit(0)
 	}
+
 	if state.showVersion {
 		printVersion(version, commit, date)
 		os.Exit(0)
@@ -53,6 +54,7 @@ func ParseFlags(version, commit, date string) (*linterconfig.Config, []string, e
 			flagSet.ShowUsage()
 			os.Exit(0)
 		}
+
 		return nil, nil, fmt.Errorf("failed to parse flags: %w", err)
 	}
 
@@ -104,8 +106,10 @@ func printVersion(version, commit, date string) {
 		if len(commit) > 7 {
 			commit = commit[:7]
 		}
+
 		versionString += fmt.Sprintf(" (%s)", commit)
 	}
+
 	fmt.Printf("retrogolint version %s\n", versionString)
 	if date != "" {
 		fmt.Printf("build date: %s\n", date)
@@ -154,6 +158,7 @@ func detectFlagOverrides(args []string) (flagState, error) {
 	for _, name := range []string{"format", "severity", "rules", "disabled-rules", "exclude-dirs", "exclude-files"} {
 		flags.String(name, "", "")
 	}
+
 	flags.Int("max-per-rule", 0, "")
 	flags.Bool("exclude-tests", false, "")
 
@@ -165,6 +170,7 @@ func detectFlagOverrides(args []string) (flagState, error) {
 				showHelp:   true,
 			}, nil
 		}
+
 		return flagState{}, fmt.Errorf("failed to parse flags: %w", err)
 	}
 
@@ -188,8 +194,10 @@ func applyFlagOverrides(cfg *linterconfig.Config, setFlags set.Set[string], opti
 		if err := linterconfig.ValidateFormat(output.Format); err != nil {
 			return fmt.Errorf("invalid format: %w", err)
 		}
+
 		cfg.Format = output.Format
 	}
+
 	if setFlags.Contains("severity") {
 		switch options.Severity {
 		case "info", "warning", "error":
@@ -198,24 +206,31 @@ func applyFlagOverrides(cfg *linterconfig.Config, setFlags set.Set[string], opti
 			return fmt.Errorf("invalid severity %q", options.Severity)
 		}
 	}
+
 	if setFlags.Contains("rules") {
 		cfg.Rules = linterconfig.ParseRules(options.Rules)
 	}
+
 	if setFlags.Contains("disabled-rules") {
 		cfg.DisabledRules = linterconfig.ParseRules(options.DisabledRules)
 	}
+
 	if setFlags.Contains("max-per-rule") {
 		if options.MaxPerRule < 0 {
 			return fmt.Errorf("max-per-rule must be >= 0, got %d", options.MaxPerRule)
 		}
+
 		cfg.MaxPerRule = options.MaxPerRule
 	}
+
 	if setFlags.Contains("exclude-tests") {
 		cfg.ExcludeTests = options.ExcludeTests
 	}
+
 	if setFlags.Contains("exclude-dirs") {
 		cfg.ExcludeDirs = linterconfig.ParseRules(options.ExcludeDirs)
 	}
+
 	if setFlags.Contains("exclude-files") {
 		cfg.ExcludeFiles = linterconfig.ParseRules(options.ExcludeFiles)
 	}

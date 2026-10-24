@@ -138,6 +138,7 @@ func IsLogFieldCall(call *ast.CallExpr) bool {
 		"StringFunc", "StringerFunc", "IntFunc", "Int64Func", "Float64Func", "BoolFunc", "DurationFunc":
 		return true
 	}
+
 	return false
 }
 
@@ -189,6 +190,7 @@ func ToSnakeCase(s string) string {
 			if i > 0 {
 				result.WriteRune('_')
 			}
+
 			result.WriteRune(r + 32)
 		} else {
 			result.WriteRune(r)
@@ -204,6 +206,7 @@ func IsLogStringCall(call *ast.CallExpr) bool {
 	if !ok {
 		return false
 	}
+
 	return sel.Sel.Name == LogFieldTypeString
 }
 
@@ -219,6 +222,7 @@ func IsFmtSprintfCall(call *ast.CallExpr) bool {
 	}
 
 	ident, ok := sel.X.(*ast.Ident)
+
 	return ok && ident.Name == PackageFmt
 }
 
@@ -228,6 +232,7 @@ func IsStringMethodCall(call *ast.CallExpr) bool {
 	if !ok {
 		return false
 	}
+
 	return sel.Sel.Name == LogFieldTypeString && len(call.Args) == 0
 }
 
@@ -250,10 +255,12 @@ func ContainsFormatVerb(format string, verbs ...rune) bool {
 						return true
 					}
 				}
+
 				break
 			}
 		}
 	}
+
 	return false
 }
 
@@ -273,6 +280,7 @@ func ExprToString(expr ast.Expr) string {
 	case *ast.StarExpr:
 		return ExprToString(e.X)
 	}
+
 	return ""
 }
 

@@ -113,6 +113,7 @@ func test() {
 					t.Logf("Violation %d: %s at %v", i+1, v.Message, v.Position)
 				}
 			}
+
 			assert.Len(t, violations, tt.wantViolations)
 
 			// Verify violation properties

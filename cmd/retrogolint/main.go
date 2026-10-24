@@ -27,6 +27,7 @@ func main() {
 		if errors.Is(err, errViolationsFound) {
 			os.Exit(1)
 		}
+
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}

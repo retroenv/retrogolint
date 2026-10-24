@@ -418,6 +418,7 @@ func runBlockPaddingTests(t *testing.T, tests []blockPaddingTest) {
 				lines = append(lines, v.Position.Line)
 				messages = append(messages, v.Message)
 			}
+
 			assert.Len(t, lines, len(tt.wantLines))
 			for index, line := range tt.wantLines {
 				assert.Equal(t, line, lines[index])

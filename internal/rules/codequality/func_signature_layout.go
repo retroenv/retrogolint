@@ -83,6 +83,7 @@ func (r *FuncSignatureLayoutRule) checkTypeDeclarations(fset *token.FileSet, fil
 		if !ok {
 			continue
 		}
+
 		funcType, ok := typeSpec.Type.(*ast.FuncType)
 		if !ok {
 			continue
@@ -184,6 +185,7 @@ func (signature functionSignature) hasValidLayout(fset *token.FileSet, funcType 
 	if len(parameters) > 0 {
 		lastParameterLine = fset.Position(parameters[len(parameters)-1].end).Line
 	}
+
 	if fset.Position(funcType.Params.Closing).Line != lastParameterLine {
 		return false
 	}
@@ -211,6 +213,7 @@ func (signature functionSignature) parameterLineIndexes() []int {
 		if parametersOnLine > 0 {
 			separatorWidth = 1
 		}
+
 		endingWidth := 1
 		if index == len(signature.parameters)-1 {
 			endingWidth = len(signature.parameterClosingSuffix(parameter))
@@ -273,6 +276,7 @@ func buildFunctionSignature(function *ast.FuncDecl) functionSignature {
 		typeParameters := renderFields(function.Type.TypeParams.List)
 		prefix += "[" + strings.Join(typeParameters, ", ") + "]"
 	}
+
 	prefix += "("
 
 	parameters := renderParameterParts(function.Type.Params.List)
@@ -320,6 +324,7 @@ func renderParameterParts(fields []*ast.Field) []string {
 			if index == len(field.Names)-1 {
 				part += " " + typeName
 			}
+
 			rendered = append(rendered, part)
 		}
 	}
@@ -343,6 +348,7 @@ func functionParameterParts(fields []*ast.Field) []functionParameterPart {
 			if index == len(field.Names)-1 {
 				end = field.Type.End()
 			}
+
 			parts = append(parts, functionParameterPart{
 				position: name.Pos(),
 				end:      end})
@@ -363,6 +369,7 @@ func renderSignatureSuffix(funcType *ast.FuncType, hasBody bool) string {
 			suffix += " (" + strings.Join(results, ", ") + ")"
 		}
 	}
+
 	if hasBody {
 		suffix += " {"
 	}
@@ -384,6 +391,7 @@ func renderFields(fields []*ast.Field) []string {
 		for _, name := range field.Names {
 			names = append(names, name.Name)
 		}
+
 		rendered = append(rendered, strings.Join(names, ", ")+" "+typeName)
 	}
 
@@ -415,6 +423,7 @@ func hasMultilineSignatureField(fset *token.FileSet, receiver, typeParams *ast.F
 		if fields == nil {
 			continue
 		}
+
 		for _, field := range fields.List {
 			if fset.Position(field.Type.Pos()).Line != fset.Position(field.Type.End()).Line {
 				return true

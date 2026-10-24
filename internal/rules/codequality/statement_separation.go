@@ -87,7 +87,8 @@ func statementList(node ast.Node) []ast.Stmt {
 // separationMessage returns the violation message when the statement at index needs an empty line before it.
 // It returns an empty string when the statement does not need an empty line.
 func separationMessage(fset *token.FileSet, list []ast.Stmt, index int) string {
-	previous, next := list[index-1], list[index]
+	previous := list[index-1]
+	next := list[index]
 
 	if name, ok := controlStatementName(previous); ok && isMultilineStatement(fset, previous) {
 		if isGuardClause(previous) && isIfStatement(next) {
@@ -132,6 +133,7 @@ func branchName(stmt ast.Stmt) (string, bool) {
 	switch s := stmt.(type) {
 	case *ast.ReturnStmt:
 		return "return", true
+
 	case *ast.BranchStmt:
 		if s.Tok != token.FALLTHROUGH {
 			return s.Tok.String(), true
@@ -158,10 +160,12 @@ func isGuardClause(stmt ast.Stmt) bool {
 	if !ok {
 		return false
 	}
+
 	call, ok := exprStmt.X.(*ast.CallExpr)
 	if !ok {
 		return false
 	}
+
 	ident, ok := call.Fun.(*ast.Ident)
 
 	return ok && ident.Name == "panic"

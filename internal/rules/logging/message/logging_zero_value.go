@@ -88,5 +88,6 @@ func (r *LoggingZeroValueRule) isLogLogger(typ ast.Expr) bool {
 	}
 
 	ident, ok := sel.X.(*ast.Ident)
+
 	return ok && ident.Name == "log"
 }

@@ -116,6 +116,7 @@ func test(logger Logger) {
 					t.Logf("Violation %d: %s", i+1, v.Message)
 				}
 			}
+
 			assert.Len(t, violations, tt.wantViolations)
 
 			if tt.messageSubstr != "" && len(violations) > 0 {

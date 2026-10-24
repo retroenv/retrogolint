@@ -128,6 +128,7 @@ func test() {
 					t.Logf("Violation %d: %s", i+1, v.Message)
 				}
 			}
+
 			assert.Len(t, violations, tt.wantViolations)
 		})
 	}

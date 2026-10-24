@@ -65,6 +65,7 @@ func (r *AssertUsageRule) checkNode(fset *token.FileSet, n ast.Node, violations 
 		if v := r.checkIfStatementPatterns(fset, ifStmt); v != nil {
 			*violations = append(*violations, *v)
 		}
+
 		return
 	}
 
@@ -358,6 +359,7 @@ func (r *AssertUsageRule) checkComparisonPattern(fset *token.FileSet, ifStmt *as
 			break
 		}
 	}
+
 	if assertFunc == "" {
 		return nil
 	}
@@ -402,6 +404,7 @@ func (r *AssertUsageRule) isTestFailure(stmt ast.Stmt) bool {
 	}
 
 	method := sel.Sel.Name
+
 	return method == "Fatal" || method == "Fatalf" || method == "Error" || method == "Errorf"
 }
 
@@ -488,6 +491,7 @@ func extractNilComparison(cond ast.Expr, op token.Token) ast.Expr {
 	if isNilIdent(binExpr.X) {
 		return binExpr.Y
 	}
+
 	return nil
 }
 

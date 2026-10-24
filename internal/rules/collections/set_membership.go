@@ -85,6 +85,7 @@ func comparesIdentToValue(expression ast.Expr, name string) bool {
 
 	left, leftOK := binary.X.(*ast.Ident)
 	right, rightOK := binary.Y.(*ast.Ident)
+
 	return (leftOK && left.Name == name && (!rightOK || right.Name != name)) ||
 		(rightOK && right.Name == name && (!leftOK || left.Name != name))
 }

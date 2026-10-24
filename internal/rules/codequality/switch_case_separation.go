@@ -54,7 +54,8 @@ func (r *SwitchCaseSeparationRule) Check(fset *token.FileSet, file *ast.File) []
 				continue
 			}
 
-			previous, next := clauses[index], clauses[index+1]
+			previous := clauses[index]
+			next := clauses[index+1]
 			if hasEmptyLine(fset, file, previous.body[len(previous.body)-1].End(), next.label) {
 				continue
 			}
@@ -145,6 +146,7 @@ func isMultiline(fset *token.FileSet, body []ast.Stmt) bool {
 
 	firstLine := fset.Position(body[0].Pos()).Line
 	lastLine := fset.Position(body[len(body)-1].End()).Line
+
 	return firstLine != lastLine
 }
 

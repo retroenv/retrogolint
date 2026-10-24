@@ -53,6 +53,7 @@ func (r *ParamPriorityRule) Check(fset *token.FileSet, file *ast.File) []violati
 		}
 
 		violations = r.checkParams(fset, funcDecl, violations)
+
 		return true
 	})
 
@@ -82,6 +83,7 @@ func (r *ParamPriorityRule) checkParams(fset *token.FileSet, funcDecl *ast.FuncD
 				Position: pos,
 				Severity: r.Severity(),
 			})
+
 			break
 		}
 	}
@@ -147,6 +149,7 @@ func resolveTypeName(expr ast.Expr) string {
 	case *ast.StarExpr:
 		return resolveTypeName(t.X)
 	}
+
 	return ""
 }
 
@@ -164,5 +167,6 @@ func isLoggerType(typeName string) bool {
 		"Logger":
 		return true
 	}
+
 	return false
 }

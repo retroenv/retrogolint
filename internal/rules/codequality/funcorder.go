@@ -84,6 +84,7 @@ func (r *FuncOrderRule) Check(fset *token.FileSet, file *ast.File) []violation.V
 
 	violations = append(violations, r.checkTypedConstantOrdering(fset, file)...)
 	violations = append(violations, r.checkDependencyOrdering(fset, decls)...)
+
 	return violations
 }
 
@@ -128,6 +129,7 @@ func (r *FuncOrderRule) checkDependencyOrdering(fset *token.FileSet, decls []dec
 		if decl.typ == nil {
 			continue
 		}
+
 		typeDeclByName[decl.name] = decl
 	}
 
@@ -136,6 +138,7 @@ func (r *FuncOrderRule) checkDependencyOrdering(fset *token.FileSet, decls []dec
 		if decl.category != categoryExportedType || decl.typ == nil {
 			continue
 		}
+
 		for _, depName := range referencedTypeNames(decl.typ.Type) {
 			depDecl, ok := typeDeclByName[depName]
 			if !ok || !isUnexportedType(depDecl.typ) {
@@ -152,6 +155,7 @@ func (r *FuncOrderRule) checkDependencyOrdering(fset *token.FileSet, decls []dec
 			}
 		}
 	}
+
 	return violations
 }
 
@@ -181,6 +185,7 @@ func (r *FuncOrderRule) categorizeFunc(funcDecl *ast.FuncDecl) (declInfo, bool) 
 		} else {
 			info.category = categoryUnexportedConstructor
 		}
+
 		return info, true
 	}
 
@@ -189,6 +194,7 @@ func (r *FuncOrderRule) categorizeFunc(funcDecl *ast.FuncDecl) (declInfo, bool) 
 	} else {
 		info.category = categoryUnexportedFunction
 	}
+
 	return info, true
 }
 
@@ -219,6 +225,7 @@ func (r *FuncOrderRule) categorizeTypeDecl(genDecl *ast.GenDecl) (declInfo, bool
 	} else {
 		info.category = categoryUnexportedType
 	}
+
 	return info, true
 }
 
@@ -237,6 +244,7 @@ func (r *FuncOrderRule) isAllowedDependencyTypePair(previous, current declInfo, 
 	if !isUnexportedType(previous.typ) {
 		return false
 	}
+
 	return r.exportedTypeUsesDependency(current, previous.name, decls)
 }
 
@@ -247,6 +255,7 @@ func (r *FuncOrderRule) exportedTypeUsesDependency(exportedType declInfo, depNam
 	if typeReferencesIdent(exportedType.typ.Type, depName) {
 		return true
 	}
+
 	for _, decl := range decls {
 		if decl.fn == nil || decl.fn.Recv == nil {
 			continue
@@ -258,6 +267,7 @@ func (r *FuncOrderRule) exportedTypeUsesDependency(exportedType declInfo, depNam
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -342,6 +352,7 @@ func categorizeMethod(name string, recv *ast.FieldList) funcCategory {
 	if isExported(name) {
 		return categoryExportedMethod
 	}
+
 	return categoryUnexportedMethod
 }
 
@@ -392,6 +403,7 @@ func returnsNamedType(results *ast.FieldList) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -443,6 +455,7 @@ func isUnexportedType(typeSpec *ast.TypeSpec) bool {
 	if typeSpec == nil {
 		return false
 	}
+
 	return !isExported(typeSpec.Name.Name)
 }
 
@@ -457,6 +470,7 @@ func typeReferencesIdent(expr ast.Expr, ident string) bool {
 			found = true
 			return false
 		}
+
 		return true
 	})
 	return found
@@ -472,7 +486,9 @@ func referencedTypeNames(expr ast.Expr) []string {
 		if id.Name == "" {
 			return true
 		}
+
 		seen.Add(id.Name)
+
 		return true
 	})
 
@@ -486,6 +502,7 @@ func functionSignatureReferencesIdent(fnType *ast.FuncType, ident string) bool {
 	if fieldListReferencesIdent(fnType.Params, ident) {
 		return true
 	}
+
 	return fieldListReferencesIdent(fnType.Results, ident)
 }
 
@@ -493,11 +510,13 @@ func fieldListReferencesIdent(fields *ast.FieldList, ident string) bool {
 	if fields == nil {
 		return false
 	}
+
 	for _, field := range fields.List {
 		if typeReferencesIdent(field.Type, ident) {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -505,6 +524,7 @@ func receiverTypeName(recv *ast.FieldList) string {
 	if recv == nil || len(recv.List) == 0 {
 		return ""
 	}
+
 	return baseTypeName(recv.List[0].Type)
 }
 

@@ -1,5 +1,5 @@
-GOLANGCI_VERSION = v2.13.2
-RETROGOLINT_VERSION = v1.0.5
+GOLANGCI_VERSION = v2.15.0
+RETROGOLINT_VERSION = v1.0.12
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "")

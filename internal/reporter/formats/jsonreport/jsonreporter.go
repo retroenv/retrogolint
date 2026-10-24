@@ -63,6 +63,7 @@ func toJSONViolations(violations []violation.Violation) []jsonViolation {
 			Context:  item.Context,
 		})
 	}
+
 	return result
 }
 

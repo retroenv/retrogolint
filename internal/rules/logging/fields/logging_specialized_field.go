@@ -270,6 +270,7 @@ func (r *LoggingSpecializedFieldRule) collectFieldTypes(field *ast.Field, typed 
 		if name == nil {
 			continue
 		}
+
 		typed[name.Name] = typ
 	}
 }
@@ -284,6 +285,7 @@ func (r *LoggingSpecializedFieldRule) collectValueSpecTypes(spec *ast.ValueSpec,
 		if name == nil {
 			continue
 		}
+
 		typed[name.Name] = typ
 	}
 }
@@ -292,6 +294,7 @@ func unwrapTypeName(expr ast.Expr) string {
 	if ident, ok := expr.(*ast.Ident); ok {
 		return ident.Name
 	}
+
 	return ""
 }
 
@@ -301,7 +304,9 @@ func unwrapParen(expr ast.Expr) ast.Expr {
 		if !ok {
 			break
 		}
+
 		expr = paren.X
 	}
+
 	return expr
 }

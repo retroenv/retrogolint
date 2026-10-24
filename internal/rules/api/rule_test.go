@@ -23,9 +23,11 @@ func TestIsLoggerMethod(t *testing.T) {
 		"Debugf", "Infof", "Warnf", "Errorf", "Fatalf", "Panicf"} {
 		assert.True(t, IsLoggerMethod(loggerCall("logger", method)), method)
 	}
+
 	for _, excluded := range []string{"fmt", "errors", "log", "t", "b"} {
 		assert.False(t, IsLoggerMethod(loggerCall(excluded, "Info")), excluded)
 	}
+
 	assert.False(t, IsLoggerMethod(loggerCall("logger", "Println")))
 	assert.False(t, IsLoggerMethod(&ast.CallExpr{Fun: &ast.Ident{Name: "Info"}}))
 }
@@ -103,6 +105,7 @@ func TestIsLogFieldCall(t *testing.T) {
 		}
 		assert.True(t, IsLogFieldCall(call), method)
 	}
+
 	call := &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
 			X:   &ast.Ident{Name: "log"},
@@ -257,6 +260,7 @@ func parseOnlyCall(t *testing.T, code string) *ast.CallExpr {
 			call = c
 			return false
 		}
+
 		return true
 	})
 

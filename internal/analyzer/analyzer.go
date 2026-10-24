@@ -50,6 +50,7 @@ func (a *Analyzer) AnalyzePackages(paths []string) ([]violation.Violation, error
 		if err != nil {
 			return nil, fmt.Errorf("failed to expand path %s: %w", path, err)
 		}
+
 		allFiles = append(allFiles, files...)
 	}
 
@@ -101,6 +102,7 @@ func (a *Analyzer) analyzeFile(path string, activeRules []api.Rule) ([]violation
 		if !ok {
 			continue
 		}
+
 		violations = append(violations, goRule.Check(fset, file)...)
 	}
 
@@ -125,16 +127,8 @@ func (a *Analyzer) analyzeFilesParallel(paths []string, activeRules []api.Rule) 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for path := range jobs {
-				violations, err := a.analyzeFile(path, activeRules)
-				if err != nil {
-					results <- fileAnalysisResult{err: fmt.Errorf("failed to analyze %s: %w", path, err)}
-					continue
-				}
-				if len(violations) > 0 {
-					results <- fileAnalysisResult{violations: violations}
-				}
-			}
+
+			a.analyzeJobs(jobs, results, activeRules)
 		}()
 	}
 
@@ -152,6 +146,7 @@ func (a *Analyzer) analyzeFilesParallel(paths []string, activeRules []api.Rule) 
 				allErrors = append(allErrors, result.err)
 				continue
 			}
+
 			allViolations = append(allViolations, result.violations...)
 		}
 	}()
@@ -160,12 +155,30 @@ func (a *Analyzer) analyzeFilesParallel(paths []string, activeRules []api.Rule) 
 		if a.config.ShouldSkipPath(path) {
 			continue
 		}
+
 		jobs <- path
 	}
+
 	close(jobs)
 
 	collector.Wait()
+
 	return allViolations, errors.Join(allErrors...)
+}
+
+// analyzeJobs analyzes the files received from jobs and sends the outcome to results.
+func (a *Analyzer) analyzeJobs(jobs <-chan string, results chan<- fileAnalysisResult, activeRules []api.Rule) {
+	for path := range jobs {
+		violations, err := a.analyzeFile(path, activeRules)
+		if err != nil {
+			results <- fileAnalysisResult{err: fmt.Errorf("failed to analyze %s: %w", path, err)}
+			continue
+		}
+
+		if len(violations) > 0 {
+			results <- fileAnalysisResult{violations: violations}
+		}
+	}
 }
 
 // filterViolations filters violations by severity and applies per-rule limits.
@@ -198,6 +211,7 @@ func (a *Analyzer) expandPath(path string) ([]string, error) {
 		if dir == "" {
 			dir = "."
 		}
+
 		return a.findSourceFiles(dir)
 	}
 
@@ -236,6 +250,7 @@ func (a *Analyzer) findSourceFiles(dir string) ([]string, error) {
 			if slices.Contains(a.config.ExcludeDirs, info.Name()) {
 				return filepath.SkipDir
 			}
+
 			return nil
 		}
 
@@ -249,6 +264,7 @@ func (a *Analyzer) findSourceFiles(dir string) ([]string, error) {
 	if err != nil {
 		return files, fmt.Errorf("failed to walk directory %s: %w", dir, err)
 	}
+
 	return files, nil
 }
 
@@ -302,6 +318,7 @@ func (a *Analyzer) filterByRuleExclusions(violations []violation.Violation) []vi
 			filtered = append(filtered, v)
 		}
 	}
+
 	return filtered
 }
 
@@ -330,6 +347,7 @@ func (a *Analyzer) getRuleCategory(ruleName string) string {
 	if !ok {
 		return ""
 	}
+
 	return rule.Category()
 }
 
@@ -352,6 +370,7 @@ func analyzeMarkdownFile(path string, activeRules []api.Rule) ([]violation.Viola
 		if !ok {
 			continue
 		}
+
 		violations = append(violations, fileRule.CheckFile(path, content)...)
 	}
 
@@ -372,6 +391,7 @@ func sortViolations(violations []violation.Violation) {
 		if c := cmp.Compare(a.Rule, b.Rule); c != 0 {
 			return c
 		}
+
 		return cmp.Compare(a.Message, b.Message)
 	})
 }

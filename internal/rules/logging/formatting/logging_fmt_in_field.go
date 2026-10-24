@@ -151,6 +151,7 @@ func (r *LoggingFmtInFieldRule) getLogFieldType(call *ast.CallExpr) string {
 	if !ok {
 		return "field"
 	}
+
 	return sel.Sel.Name
 }
 
@@ -175,6 +176,7 @@ func (r *LoggingFmtInFieldRule) getSuggestion(fmtFunc string, fmtCall *ast.CallE
 	case fmtErrorf:
 		return suggestionLogError
 	}
+
 	return ""
 }
 

@@ -154,5 +154,6 @@ func sortsSlice(statement ast.Stmt, sliceName string) bool {
 	}
 
 	ident, ok := call.Args[0].(*ast.Ident)
+
 	return ok && ident.Name == sliceName
 }

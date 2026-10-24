@@ -251,6 +251,7 @@ func inspectCalls(file *ast.File, fn func(*ast.CallExpr)) {
 		if call, ok := n.(*ast.CallExpr); ok {
 			fn(call)
 		}
+
 		return true
 	})
 }

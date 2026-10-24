@@ -92,6 +92,7 @@ func (r *TableStructureRule) checkBlock(path string, start int, block []string) 
 				"table separator row mixes separator and content cells")
 			return []violation.Violation{found}
 		}
+
 		return nil
 	}
 

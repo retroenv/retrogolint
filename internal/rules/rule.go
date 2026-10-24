@@ -77,6 +77,7 @@ func (r *Registry) All() []api.Rule {
 	for _, rule := range r.rules {
 		rules = append(rules, rule)
 	}
+
 	return rules
 }
 
@@ -91,8 +92,10 @@ func (r *Registry) ActiveRules(ruleFilters, disabled []string) []api.Rule {
 			if isRuleDisabled(rule, disabledRules) {
 				continue
 			}
+
 			activeRules = append(activeRules, rule)
 		}
+
 		return activeRules
 	}
 
@@ -105,6 +108,7 @@ func (r *Registry) ActiveRules(ruleFilters, disabled []string) []api.Rule {
 				activeRules = append(activeRules, rule)
 				ruleMap.Add(filter)
 			}
+
 			continue
 		}
 
@@ -138,6 +142,7 @@ func (r *Registry) ValidateFilters(filters []string) error {
 		if validCategories.Contains(filter) {
 			continue
 		}
+
 		unknown = append(unknown, filter)
 	}
 
@@ -146,6 +151,7 @@ func (r *Registry) ValidateFilters(filters []string) error {
 	}
 
 	slices.Sort(unknown)
+
 	return fmt.Errorf("unknown rule or category: %s", strings.Join(unknown, ", "))
 }
 
