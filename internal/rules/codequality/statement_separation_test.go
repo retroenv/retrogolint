@@ -212,7 +212,6 @@ func run(a int) int {
 	return 0
 }
 `,
-			wantLines: []int{7},
 		},
 		{
 			name: "guard clause before call",
@@ -225,7 +224,6 @@ func run(a int) {
 	println(a)
 }
 `,
-			wantLines: []int{7},
 		},
 		{
 			name: "if with else before if",
@@ -470,6 +468,38 @@ func run() func(a, b, c int) int {
 	}
 
 	runStatementSeparationTests(t, tests)
+}
+
+func TestStatementSeparationRule_TestFiles(t *testing.T) {
+	code := `package test
+func run(a int) int {
+	if a > 0 {
+		a++
+	}
+	a *= 2
+	a++
+	return a
+}
+`
+	rule := NewStatementSeparationRule()
+
+	tests := []struct {
+		filename string
+		want     int
+	}{
+		{filename: "run.go", want: 2},
+		{filename: "run_test.go", want: 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			fset := token.NewFileSet()
+			file, err := parser.ParseFile(fset, tt.filename, code, parser.ParseComments)
+			assert.NoError(t, err)
+
+			assert.Len(t, rule.Check(fset, file), tt.want)
+		})
+	}
 }
 
 func TestStatementSeparationRule_Metadata(t *testing.T) {

@@ -44,7 +44,12 @@ func (r *StatementSeparationRule) Category() string {
 
 // Check analyzes a file for statements that directly follow a multiline control statement, and for return and
 // branch statements that directly follow other statements in a block of three or more statements.
+// Test files are not analyzed, because test steps read as one sequence.
 func (r *StatementSeparationRule) Check(fset *token.FileSet, file *ast.File) []violation.Violation {
+	if isTestFile(fset, file) {
+		return nil
+	}
+
 	var violations []violation.Violation
 
 	ast.Inspect(file, func(node ast.Node) bool {
@@ -91,7 +96,7 @@ func separationMessage(fset *token.FileSet, list []ast.Stmt, index int) string {
 	next := list[index]
 
 	if name, ok := controlStatementName(previous); ok && isMultilineStatement(fset, previous) {
-		if isGuardClause(previous) && isIfStatement(next) {
+		if isGuardClause(previous) {
 			return ""
 		}
 
@@ -144,7 +149,7 @@ func branchName(stmt ast.Stmt) (string, bool) {
 }
 
 // isGuardClause reports whether a statement is an if statement without else branch whose body ends with a
-// return, break, continue, goto, or panic call. A guard clause can stay attached to a following if statement.
+// return, break, continue, goto, or panic call. A guard clause can stay attached to the next statement.
 func isGuardClause(stmt ast.Stmt) bool {
 	ifStmt, ok := stmt.(*ast.IfStmt)
 	if !ok || ifStmt.Else != nil || len(ifStmt.Body.List) == 0 {
@@ -169,12 +174,6 @@ func isGuardClause(stmt ast.Stmt) bool {
 	ident, ok := call.Fun.(*ast.Ident)
 
 	return ok && ident.Name == "panic"
-}
-
-// isIfStatement reports whether a statement is an if statement.
-func isIfStatement(stmt ast.Stmt) bool {
-	_, ok := stmt.(*ast.IfStmt)
-	return ok
 }
 
 // isMultilineStatement reports whether a statement spans more than one line.

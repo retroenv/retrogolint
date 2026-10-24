@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.13] - 2026-10-24
+
+Changed:
+
+* `codequality-statement-separation` no longer reports a guard clause that is followed by a statement other than an `if` statement. A guard clause is an `if` without `else` that ends in `return`, `break`, `continue`, `goto`, or `panic`.
+* `codequality-statement-separation` no longer analyzes test files.
+
 ## [v1.0.12] - 2026-10-24
 
 Fixed:
