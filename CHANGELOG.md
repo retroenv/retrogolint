@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 Added:
 
+* add `codequality-block-padding` to report blocks that start or end with an empty line, and bodies of multiline `if` conditions and function signatures that start directly with a statement. The rule reports the same locations as the golangci-lint `whitespace` linter with `multi-if` and `multi-func` enabled, and it can replace that linter. A comment at the end of a block that follows a multiline `if` condition or function signature is not reported as a trailing empty line.
 * add `codequality-multi-assign` to report assignment statements that set multiple explicit values, such as `a, b = x, y`, including short declarations and loop headers. Multiple results from one expression, such as function calls, map lookups, type assertions, and channel receives, are not reported. The rule also reports swaps. Check evaluation order before you split such an assignment.
 
 ## [v1.0.10] - 2026-10-20

@@ -6,6 +6,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 
 | Rule | Severity | Checks |
 |------|----------|--------|
+| `codequality-block-padding` | warning | Blocks do not start or end with an empty line; the body of a multiline `if` condition, function declaration signature, or function literal signature starts with an empty line or a comment; empty blocks are not checked; a comment on the line of the opening brace is not part of the block content. The rule replaces the golangci-lint `whitespace` linter with `multi-if` and `multi-func` enabled |
 | `codequality-func-signature-layout` | warning | Function, method, and function type signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-inline-interface` | warning | Non-empty interface types written inline, such as in type assertions, parameters, results, and fields, are declared as named types; empty interfaces, named interface declarations, and type parameter constraints are not reported |

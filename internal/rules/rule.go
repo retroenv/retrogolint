@@ -44,6 +44,7 @@ func NewRegistry() *Registry {
 	r.Register(collections.NewSetSortRule())
 	r.Register(linttesting.NewAssertUsageRule())
 	r.Register(markdownrules.NewTableStructureRule())
+	r.Register(codequality.NewBlockPaddingRule())
 	r.Register(codequality.NewFuncOrderRule())
 	r.Register(codequality.NewFuncSignatureLayoutRule())
 	r.Register(codequality.NewInlineInterfaceRule())
