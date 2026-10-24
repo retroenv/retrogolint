@@ -50,14 +50,19 @@ func (r *SwitchCaseSeparationRule) Check(fset *token.FileSet, file *ast.File) []
 		}
 
 		for index := 0; index+1 < len(clauses); index++ {
-			if !needsSeparator(fset, clauses, index) || hasEmptyLine(fset, file, clauses[index], clauses[index+1]) {
+			if !needsSeparator(fset, clauses, index) {
+				continue
+			}
+
+			previous, next := clauses[index], clauses[index+1]
+			if hasEmptyLine(fset, file, previous.body[len(previous.body)-1].End(), next.label) {
 				continue
 			}
 
 			violations = append(violations, violation.Violation{
 				Rule:     r.Name(),
 				Message:  "multiline case bodies should be separated from adjacent cases by an empty line",
-				Position: fset.Position(clauses[index+1].label),
+				Position: fset.Position(next.label),
 				Severity: r.Severity(),
 			})
 		}
@@ -149,25 +154,24 @@ func isFallthrough(stmt ast.Stmt) bool {
 	return ok && branch.Tok == token.FALLTHROUGH
 }
 
-// hasEmptyLine reports whether an empty line is between the body of a case and the label of the next case.
+// hasEmptyLine reports whether an empty line is between the end of a node and the start of the next node.
 // Comment lines in that range are not empty lines.
-func hasEmptyLine(fset *token.FileSet, file *ast.File, previous, next caseClause) bool {
-	bodyEnd := previous.body[len(previous.body)-1].End()
-	firstGapLine := fset.Position(bodyEnd).Line + 1
-	labelLine := fset.Position(next.label).Line
-	gapLines := labelLine - firstGapLine
+func hasEmptyLine(fset *token.FileSet, file *ast.File, end, next token.Pos) bool {
+	firstGapLine := fset.Position(end).Line + 1
+	nextLine := fset.Position(next).Line
+	gapLines := nextLine - firstGapLine
 
 	commentLines := 0
 	first := sort.Search(len(file.Comments), func(i int) bool {
-		return file.Comments[i].Pos() > bodyEnd
+		return file.Comments[i].Pos() > end
 	})
 	for _, group := range file.Comments[first:] {
-		if group.End() > next.label {
+		if group.End() > next {
 			break
 		}
 
 		startLine := max(fset.Position(group.Pos()).Line, firstGapLine)
-		endLine := min(fset.Position(group.End()).Line, labelLine-1)
+		endLine := min(fset.Position(group.End()).Line, nextLine-1)
 		if endLine >= startLine {
 			commentLines += endLine - startLine + 1
 		}

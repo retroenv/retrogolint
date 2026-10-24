@@ -51,6 +51,7 @@ func NewRegistry() *Registry {
 	r.Register(codequality.NewMultiAssignRule())
 	r.Register(codequality.NewParamPriorityRule())
 	r.Register(codequality.NewParamTypeCombineRule())
+	r.Register(codequality.NewStatementSeparationRule())
 	r.Register(codequality.NewStructLiteralMultilineRule())
 	r.Register(codequality.NewSwitchCaseSeparationRule())
 	r.Register(codequality.NewTypeStutterRule())
