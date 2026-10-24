@@ -9,6 +9,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 | `codequality-func-signature-layout` | warning | Function, method, and function type signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-inline-interface` | warning | Non-empty interface types written inline, such as in type assertions, parameters, results, and fields, are declared as named types; empty interfaces, named interface declarations, and type parameter constraints are not reported |
+| `codequality-multi-assign` | warning | Assignment statements with multiple explicit values, including short declarations and loop headers |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
 | `codequality-param-type-combine` | warning | Consecutive function parameters with the same type share one type declaration |
 | `codequality-struct-literal-multiline` | warning | Keyed struct literals with two or more fields start fields on a new line and use one line per field |
@@ -41,6 +42,29 @@ type resolver interface{ Resolve(uint16) (int, bool) }
 
 r, ok := v.(resolver)
 ```
+
+`codequality-multi-assign` reports this assignment:
+
+```go
+m.lastWriteCycle, m.lastWriteValid = cycle, ok
+```
+
+Use separate assignments for independent values:
+
+```go
+m.lastWriteCycle = cycle
+m.lastWriteValid = ok
+```
+
+The rule accepts multiple results from one expression, such as function calls,
+map lookups, type assertions, and channel receives. For example:
+
+```go
+cycle, ok := m.CPUCycles()
+```
+
+The rule also reports swaps and assignments that extend across multiple lines.
+Before you split an assignment, check its evaluation order and dependencies.
 
 ## Collections
 

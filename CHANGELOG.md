@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Added:
+
+* add `codequality-multi-assign` to report assignment statements that set multiple explicit values, such as `a, b = x, y`, including short declarations and loop headers. Multiple results from one expression, such as function calls, map lookups, type assertions, and channel receives, are not reported. The rule also reports swaps. Check evaluation order before you split such an assignment.
+
 ## [v1.0.10] - 2026-10-20
 
 Added:

@@ -62,6 +62,25 @@ func TestAnalyzer_AnalyzeFiles(t *testing.T) {
 	}
 }
 
+func TestAnalyzer_AnalyzeFiles_MultiAssign(t *testing.T) {
+	cfg := linterconfig.DefaultConfig()
+	cfg.Rules = []string{"codequality-multi-assign"}
+	a := New(cfg, rules.NewRegistry())
+
+	invalid, err := a.AnalyzeFiles([]string{"../../testdata/invalid/multi_assign.go"})
+	assert.NoError(t, err)
+	assert.Len(t, invalid, 1)
+	if len(invalid) > 0 {
+		assert.Equal(t, "codequality-multi-assign", invalid[0].Rule)
+		assert.Equal(t, 9, invalid[0].Position.Line)
+		assert.Equal(t, 2, invalid[0].Position.Column)
+	}
+
+	valid, err := a.AnalyzeFiles([]string{"../../testdata/valid/multi_assign.go"})
+	assert.NoError(t, err)
+	assert.Len(t, valid, 0)
+}
+
 func TestAnalyzer_AnalyzeFiles_ReturnsParseError(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "broken.go")
