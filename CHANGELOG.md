@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.0.12] - 2026-10-24
+
+Fixed:
+
+* `codequality-multi-assign` no longer reports a swap or rotation of the same targets, such as `a, b = b, a` or `s.front, s.back = s.back, s.front`. These assignments do not need a temporary variable. The rule still reports such an assignment when a value contains a function call or a channel receive, and it still reports short declarations such as `a, b := b, a`.
+
 ## [v1.0.11] - 2026-10-24
 
 Added:

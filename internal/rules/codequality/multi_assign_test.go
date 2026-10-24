@@ -33,6 +33,33 @@ func TestMultiAssignRule_Check(t *testing.T) {
 		{
 			name: "swap",
 			code: `a, b = b, a`,
+		},
+		{
+			name: "field swap",
+			code: `s.front, s.back = s.back, s.front`,
+		},
+		{
+			name: "rotation",
+			code: `a, b, c = b, c, a`,
+		},
+		{
+			name: "not a permutation",
+			code: `a, b = b, c`,
+			want: 1,
+		},
+		{
+			name: "swap with calls",
+			code: `a[next()], b[next()] = b[next()], a[next()]`,
+			want: 1,
+		},
+		{
+			name: "swap with receive",
+			code: `a, b = <-b, a`,
+			want: 1,
+		},
+		{
+			name: "short declaration with swapped values",
+			code: `a, b := b, a`,
 			want: 1,
 		},
 		{

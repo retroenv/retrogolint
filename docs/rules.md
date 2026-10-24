@@ -10,7 +10,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 | `codequality-func-signature-layout` | warning | Function, method, and function type signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-inline-interface` | warning | Non-empty interface types written inline, such as in type assertions, parameters, results, and fields, are declared as named types; empty interfaces, named interface declarations, and type parameter constraints are not reported |
-| `codequality-multi-assign` | warning | Assignment statements with multiple explicit values, including short declarations and loop headers |
+| `codequality-multi-assign` | warning | Assignment statements with multiple explicit values, including short declarations and loop headers; a swap or rotation of the same targets is not reported |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
 | `codequality-param-type-combine` | warning | Consecutive function parameters with the same type share one type declaration |
 | `codequality-statement-separation` | warning | Multiline `if`, `for`, `range`, `switch`, and `select` statements are followed by an empty line when another statement comes after them in the same block; `return`, `break`, `continue`, and `goto` statements that are the fourth or a later statement of a block are preceded by an empty line; comment lines do not count as empty lines; a guard clause, which is an `if` without `else` that ends in `return`, `break`, `continue`, `goto`, or `panic`, can stay attached to a following `if` |
@@ -65,7 +65,16 @@ map lookups, type assertions, and channel receives. For example:
 cycle, ok := m.CPUCycles()
 ```
 
-The rule also reports swaps and assignments that extend across multiple lines.
+The rule does not report a swap. A swap assigns the same targets in another order,
+and it does not need a temporary variable:
+
+```go
+s.front, s.back = s.back, s.front
+```
+
+The rule still reports a swap when its operands contain a function call or a
+channel receive, because the order of those operations can change the result.
+The rule also reports assignments that extend across multiple lines.
 Before you split an assignment, check its evaluation order and dependencies.
 
 ## Collections
