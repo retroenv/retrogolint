@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Added:
+
+* add `codequality-interface-multiline` to require non-empty interface type declarations to use multiple lines. Empty interfaces and inline type parameter constraints are not reported.
+
 ## [v1.0.13] - 2026-10-24
 
 Changed:

@@ -81,6 +81,24 @@ func TestAnalyzer_AnalyzeFiles_MultiAssign(t *testing.T) {
 	assert.Len(t, valid, 0)
 }
 
+func TestAnalyzer_AnalyzeFiles_InterfaceMultiline(t *testing.T) {
+	cfg := linterconfig.DefaultConfig()
+	cfg.Rules = []string{"codequality-interface-multiline"}
+	a := New(cfg, rules.NewRegistry())
+
+	invalid, err := a.AnalyzeFiles([]string{"../../testdata/invalid/interface_multiline.go"})
+	assert.NoError(t, err)
+	assert.Len(t, invalid, 1)
+	if len(invalid) > 0 {
+		assert.Equal(t, "codequality-interface-multiline", invalid[0].Rule)
+		assert.Equal(t, 7, invalid[0].Position.Line)
+	}
+
+	valid, err := a.AnalyzeFiles([]string{"../../testdata/valid/interface_multiline.go"})
+	assert.NoError(t, err)
+	assert.Len(t, valid, 0)
+}
+
 func TestAnalyzer_AnalyzeFiles_ReturnsParseError(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "broken.go")

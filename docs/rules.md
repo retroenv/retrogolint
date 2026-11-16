@@ -10,6 +10,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 | `codequality-func-signature-layout` | warning | Function, method, and function type signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-inline-interface` | warning | Non-empty interface types written inline, such as in type assertions, parameters, results, and fields, are declared as named types; empty interfaces, named interface declarations, and type parameter constraints are not reported |
+| `codequality-interface-multiline` | warning | Non-empty interface type declarations use multiple lines; empty interfaces and inline constraints are not reported |
 | `codequality-multi-assign` | warning | Assignment statements with multiple explicit values, including short declarations and loop headers; a swap or rotation of the same targets is not reported |
 | `codequality-param-priority` | warning | Function parameters put `context.Context` first, then logger parameters, then other parameters |
 | `codequality-param-type-combine` | warning | Consecutive function parameters with the same type share one type declaration |
@@ -26,7 +27,9 @@ Retrogolint provides `codequality-param-type-combine` because GoCritic's `paramT
 Example:
 
 ```go
-type dep interface{ Run() }
+type dep interface {
+	Run()
+}
 
 type Service struct {
 	dep dep
@@ -40,9 +43,37 @@ func (s *Service) Tick(m dep) {}
 ```go
 resolver, ok := v.(interface{ Resolve(uint16) (int, bool) })
 
-type resolver interface{ Resolve(uint16) (int, bool) }
+type resolver interface {
+	Resolve(uint16) (int, bool)
+}
 
 r, ok := v.(resolver)
+```
+
+`codequality-interface-multiline` reports this declaration:
+
+```go
+type Device interface{ TransferState(*Archive) error }
+```
+
+Prefer multiple lines:
+
+```go
+type Device interface {
+	TransferState(*Archive) error
+}
+```
+
+The rule also reports named interfaces that contain embedded types or type
+terms. It does not report an empty interface or an inline type parameter
+constraint:
+
+```go
+type Values interface{}
+
+func Max[T interface{ ~int | ~uint16 }](a, b T) T {
+	return max(a, b)
+}
 ```
 
 `codequality-multi-assign` reports this assignment:
