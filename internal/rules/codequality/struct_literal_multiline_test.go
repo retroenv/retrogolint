@@ -133,6 +133,103 @@ func New(memory any) *CPU {
 			code: `package test
 var values = map[string]int{"one": 1, "two": 2}
 `,
+			wantViolations: 1,
+		},
+		{
+			name: "named map with identifier keys",
+			code: `package test
+type Counts map[string]int
+const first, second = "a", "b"
+var counts = Counts{first: 1, second: 2}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "map alias chain",
+			code: `package test
+type Counts map[string]int
+type Alias = Counts
+const first, second = "a", "b"
+var counts = Alias{first: 1, second: 2}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "generic map type",
+			code: `package test
+type Counts[K comparable, V any] map[K]V
+const first, second = "a", "b"
+var counts = Counts[string, int]{first: 1, second: 2}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "generic slice type",
+			code: `package test
+type Values[T any] []T
+const first, second = 0, 1
+var values = Values[int]{first: 1, second: 2}
+`,
+			wantViolations: 0,
+		},
+		{
+			name: "named array",
+			code: `package test
+type Values [2]int
+const first, second = 0, 1
+var values = Values{first: 1, second: 2}
+`,
+			wantViolations: 0,
+		},
+		{
+			name: "struct alias stays checked",
+			code: `package test
+type Point struct { X, Y int }
+type Alias = Point
+var point = Alias{X: 1, Y: 2}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "local map shadows package struct",
+			code: `package test
+type Counts struct { First, Second int }
+const first, second = "a", "b"
+func sample() {
+ type Counts map[string]int
+ _ = Counts{first: 1, second: 2}
+}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "parenthesized map type",
+			code: `package test
+type Counts (map[string]int)
+const first, second = "a", "b"
+var counts = Counts{first: 1, second: 2}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "alias cycle in invalid input",
+			code: `package test
+type First = Second
+type Second = First
+var value = First{X: 1, Y: 2}
+`,
+			wantViolations: 1,
+		},
+		{
+			name: "opcode rows remain unchecked",
+			code: `package test
+type Opcode struct { Instruction string; Timing byte }
+var opcodes = [4]Opcode{
+ {Instruction: "ADD", Timing: 3},
+ {}, {},
+ {Instruction: "SUB", Timing: 3},
+}
+`,
 			wantViolations: 0,
 		},
 		{

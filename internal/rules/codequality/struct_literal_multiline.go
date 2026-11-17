@@ -4,11 +4,12 @@ import (
 	"go/ast"
 	"go/token"
 
+	"github.com/retroenv/retrogolib/set"
 	"github.com/retroenv/retrogolint/internal/rules/api"
 	"github.com/retroenv/retrogolint/internal/violation"
 )
 
-// StructLiteralMultilineRule detects multi-field struct literals with fields on the same line as the opening brace or another field.
+// StructLiteralMultilineRule checks the layout of struct fields and map entries.
 type StructLiteralMultilineRule struct{}
 
 // NewStructLiteralMultilineRule creates a new StructLiteralMultilineRule.
@@ -23,7 +24,7 @@ func (r *StructLiteralMultilineRule) Name() string {
 
 // Description returns the rule description.
 func (r *StructLiteralMultilineRule) Description() string {
-	return "Struct literals with multiple fields should start fields on a new line and use one line per field"
+	return "Struct fields and map entries should start on a new line and use one line per entry"
 }
 
 // Severity returns the default severity.
@@ -36,13 +37,18 @@ func (r *StructLiteralMultilineRule) Category() string {
 	return api.CategoryCodeQuality
 }
 
-// Check analyzes a file for multi-field struct literals that do not put the first field on a new line or put two fields on one line.
+// Check reports struct fields and map entries that share a line.
 func (r *StructLiteralMultilineRule) Check(fset *token.FileSet, file *ast.File) []violation.Violation {
 	var violations []violation.Violation
+	inferredTypes := make(map[*ast.CompositeLit]ast.Expr)
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		literal, ok := node.(*ast.CompositeLit)
-		if !ok || !isKeyedStructLiteral(literal) {
+		if !ok {
+			return true
+		}
+		inferNestedLiteralTypes(literal, inferredTypes)
+		if !isCheckedLiteral(literal, inferredTypes[literal]) {
 			return true
 		}
 
@@ -53,7 +59,7 @@ func (r *StructLiteralMultilineRule) Check(fset *token.FileSet, file *ast.File) 
 
 		violations = append(violations, violation.Violation{
 			Rule:     r.Name(),
-			Message:  "struct literal fields should start on a new line and use one line per field",
+			Message:  "struct fields and map entries should start on a new line and use one line per entry",
 			Position: fset.Position(fieldPos),
 			Severity: r.Severity(),
 		})
@@ -81,13 +87,19 @@ func sharedLineFieldPos(fset *token.FileSet, literal *ast.CompositeLit) token.Po
 	return token.NoPos
 }
 
-func isKeyedStructLiteral(literal *ast.CompositeLit) bool {
+func isCheckedLiteral(literal *ast.CompositeLit, inferredType ast.Expr) bool {
 	if len(literal.Elts) < 2 {
 		return false
 	}
+	if literal.Type == nil {
+		_, isMap := inferredType.(*ast.MapType)
+		return isMap
+	}
 
-	switch literal.Type.(type) {
-	case nil, *ast.ArrayType, *ast.MapType:
+	switch literalUnderlyingType(literal.Type).(type) {
+	case *ast.MapType:
+		return true
+	case *ast.ArrayType:
 		return false
 	}
 
@@ -102,4 +114,78 @@ func isKeyedStructLiteral(literal *ast.CompositeLit) bool {
 	}
 
 	return true
+}
+
+// inferNestedLiteralTypes records omitted types before the AST visits child literals.
+func inferNestedLiteralTypes(literal *ast.CompositeLit, inferredTypes map[*ast.CompositeLit]ast.Expr) {
+	typ := literal.Type
+	if typ == nil {
+		typ = inferredTypes[literal]
+	}
+
+	switch typ := literalUnderlyingType(typ).(type) {
+	case *ast.ArrayType:
+		for _, element := range literal.Elts {
+			if keyed, ok := element.(*ast.KeyValueExpr); ok {
+				element = keyed.Value
+			}
+
+			inferLiteralType(element, typ.Elt, inferredTypes)
+		}
+
+	case *ast.MapType:
+		for _, element := range literal.Elts {
+			if keyed, ok := element.(*ast.KeyValueExpr); ok {
+				inferLiteralType(keyed.Key, typ.Key, inferredTypes)
+				inferLiteralType(keyed.Value, typ.Value, inferredTypes)
+			}
+		}
+	}
+}
+
+func inferLiteralType(expr, typ ast.Expr, inferredTypes map[*ast.CompositeLit]ast.Expr) {
+	literal, ok := expr.(*ast.CompositeLit)
+	if !ok || literal.Type != nil {
+		return
+	}
+	typ = literalUnderlyingType(typ)
+	if pointer, ok := typ.(*ast.StarExpr); ok {
+		typ = literalUnderlyingType(pointer.X)
+	}
+
+	inferredTypes[literal] = typ
+}
+
+// literalUnderlyingType follows type declarations in the same file.
+func literalUnderlyingType(expr ast.Expr) ast.Expr {
+	seen := set.New[ast.Expr]()
+	for expr != nil && !seen.Contains(expr) {
+		seen.Add(expr)
+		switch typ := expr.(type) {
+		case *ast.Ident:
+			if typ.Obj == nil {
+				return nil
+			}
+			spec, ok := typ.Obj.Decl.(*ast.TypeSpec)
+			if !ok {
+				return nil
+			}
+
+			expr = spec.Type
+
+		case *ast.ParenExpr:
+			expr = typ.X
+
+		case *ast.IndexExpr:
+			expr = typ.X
+
+		case *ast.IndexListExpr:
+			expr = typ.X
+
+		default:
+			return expr
+		}
+	}
+
+	return nil
 }
