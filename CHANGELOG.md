@@ -2,12 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v1.0.14] - 2026-11-17
 
 Added:
 
-* add `codequality-func-literal-multiline` to require a function literal passed directly as a call argument or assigned in a declaration to use multiple lines for its body. Empty function literals, return values, deferred or goroutine calls, and struct field values are not reported.
+* add `codequality-func-literal-multiline` to require a function literal passed directly as a call argument or assigned to a variable to use multiple lines for its body. The rule does not report empty function literals, returned literals, literals invoked directly by `defer` or `go`, or literals used as struct field values.
 * add `codequality-interface-multiline` to require non-empty interface type declarations to use multiple lines. Empty interfaces and inline type parameter constraints are not reported.
+
+Changed:
+
+* `codequality-struct-literal-multiline` now also checks map literals with two or more entries. The rule resolves named collection types declared in the same file and checks nested maps with omitted types.
+* Go 1.25 or later is required.
+* `-version` uses a multiline format and reports available commit information.
 
 ## [v1.0.13] - 2026-10-24
 
