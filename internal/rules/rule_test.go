@@ -236,6 +236,7 @@ func TestRegistryValidateFilters(t *testing.T) {
 		"logging",
 		"logging-capitalization",
 		"codequality",
+		"codequality-func-literal-multiline",
 		"codequality-func-signature-layout",
 		"codequality-multi-assign",
 		"codequality-param-type-combine",

@@ -121,6 +121,27 @@ func TestAnalyzer_AnalyzeFiles_MapLiteralMultiline(t *testing.T) {
 	assert.Len(t, valid, 0)
 }
 
+func TestAnalyzer_AnalyzeFiles_FuncLiteralMultiline(t *testing.T) {
+	cfg := linterconfig.DefaultConfig()
+	cfg.Rules = []string{"codequality-func-literal-multiline"}
+	a := New(cfg, rules.NewRegistry())
+
+	invalid, err := a.AnalyzeFiles([]string{"../../testdata/invalid/func_literal_multiline.go"})
+	assert.NoError(t, err)
+	assert.Len(t, invalid, 4)
+	if len(invalid) == 4 {
+		assert.Equal(t, "codequality-func-literal-multiline", invalid[0].Rule)
+		assert.Equal(t, 10, invalid[0].Position.Line)
+		assert.Equal(t, 14, invalid[1].Position.Line)
+		assert.Equal(t, 18, invalid[2].Position.Line)
+		assert.Equal(t, 22, invalid[3].Position.Line)
+	}
+
+	valid, err := a.AnalyzeFiles([]string{"../../testdata/valid/func_literal_multiline.go"})
+	assert.NoError(t, err)
+	assert.Len(t, valid, 0)
+}
+
 func TestAnalyzer_AnalyzeFiles_ReturnsParseError(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "broken.go")

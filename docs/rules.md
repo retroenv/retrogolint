@@ -7,6 +7,7 @@ Rules can be selected by exact rule name or by category. Built-in categories are
 | Rule | Severity | Checks |
 |------|----------|--------|
 | `codequality-block-padding` | warning | Blocks do not start or end with an empty line; the body of a multiline `if` condition, function declaration signature, or function literal signature starts with an empty line or a comment; empty blocks are not checked; a comment on the line of the opening brace is not part of the block content. The rule replaces the golangci-lint `whitespace` linter with `multi-if` and `multi-func` enabled |
+| `codequality-func-literal-multiline` | warning | Function literals passed directly as call arguments or assigned in declarations use multiple lines for their body; empty bodies, return values, deferred or goroutine calls, and struct field values are not reported; test files are analyzed |
 | `codequality-func-signature-layout` | warning | Function, method, and function type signatures stay on one line through 120 columns; longer signatures keep parameter names on the earliest line where they fit |
 | `codequality-funcorder` | warning | Top-level declarations follow order: exported types, constructors, methods → unexported types, constructors, methods → functions; unexported dependency types must be declared before exported types that use them |
 | `codequality-inline-interface` | warning | Non-empty interface types written inline, such as in type assertions, parameters, results, and fields, are declared as named types; empty interfaces, named interface declarations, and type parameter constraints are not reported |
@@ -74,6 +75,38 @@ type Values interface{}
 func Max[T interface{ ~int | ~uint16 }](a, b T) T {
 	return max(a, b)
 }
+```
+
+`codequality-func-literal-multiline` reports this call:
+
+```go
+return server.serveWithDisplays(ctx, func() error { return serveStdio(ctx, server) })
+```
+
+It also reports an assigned function literal:
+
+```go
+serve := func() error { return serveStdio(ctx, server) }
+```
+
+Prefer multiple lines for the body:
+
+```go
+return server.serveWithDisplays(ctx, func() error {
+	return serveStdio(ctx, server)
+})
+
+serve := func() error {
+	return serveStdio(ctx, server)
+}
+```
+
+The rule does not report an empty body, a return value, or a deferred call:
+
+```go
+serveWithDisplays(ctx, func() error {})
+return func() error { return serveStdio(ctx, server) }
+defer func() { close(done) }()
 ```
 
 `codequality-multi-assign` reports this assignment:
