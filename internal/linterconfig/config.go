@@ -2,6 +2,7 @@
 package linterconfig
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -178,7 +179,7 @@ func ApplyFileConfig(cfg *Config, fileCfg FileConfig) error {
 func loadFileConfigBytes(data []byte, source string) (FileConfig, error) {
 	fileCfg := DefaultFileConfig()
 	normalized := normalizeConfigData(data)
-	parsed, err := config.LoadConfigBytes(normalized)
+	parsed, err := config.Parse(bytes.NewReader(normalized), config.Options{})
 	if err != nil {
 		return FileConfig{}, fmt.Errorf("failed to parse config file %s: %w", source, err)
 	}

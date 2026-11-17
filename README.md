@@ -36,7 +36,7 @@ See the [rule reference](docs/rules.md) for rule details and examples.
 
 Download a prebuilt binary from
 [Releases](https://github.com/retroenv/retrogolint/releases), or install from
-source with Go 1.22 or later:
+source with Go 1.25 or later:
 
 ```bash
 go install github.com/retroenv/retrogolint/cmd/retrogolint@latest

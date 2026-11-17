@@ -1,5 +1,5 @@
 module github.com/retroenv/retrogolint
 
-go 1.22
+go 1.25.0
 
-require github.com/retroenv/retrogolib v0.0.0-20260904013222-1cac5af40047
+require github.com/retroenv/retrogolib v0.0.0-20261117020353-e0b24143c507
