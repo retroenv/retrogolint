@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	version = "dev"
-	commit  = ""
-	date    = ""
+	version    = "dev"
+	commit     = ""
+	commitTime = ""
 )
 
 // errViolationsFound indicates violations were detected during analysis.
@@ -34,7 +34,7 @@ func main() {
 }
 
 func run() error {
-	cfg, paths, err := cli.ParseFlags(version, commit, date)
+	cfg, paths, err := cli.ParseFlags(version, commit, commitTime)
 	if err != nil {
 		return fmt.Errorf("failed to parse flags: %w", err)
 	}

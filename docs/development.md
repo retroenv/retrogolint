@@ -29,10 +29,10 @@ The repository includes `.retrogolint.ini` to exclude intentional fixtures in `t
 
 ## Versioning
 
-The version, commit, and build date are injected at build time via ldflags in the `Makefile`:
+The Makefile injects the version, commit, and commit time at build time:
 
 ```
--X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)
+-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.commitTime=$(DATE)
 ```
 
 `VERSION` defaults to the output of `git describe --tags --always --dirty`. Print the version with:

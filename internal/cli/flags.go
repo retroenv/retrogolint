@@ -9,13 +9,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/retroenv/retrogolib/buildinfo"
 	"github.com/retroenv/retrogolib/cli"
 	"github.com/retroenv/retrogolib/set"
 	"github.com/retroenv/retrogolint/internal/linterconfig"
 )
 
 // ParseFlags parses command line flags and returns the configuration and paths to analyze.
-func ParseFlags(version, commit, date string) (*linterconfig.Config, []string, error) {
+func ParseFlags(version, commit, commitTime string) (*linterconfig.Config, []string, error) {
 	args := os.Args[1:]
 	state, err := detectFlagOverrides(args)
 	if err != nil {
@@ -30,7 +31,7 @@ func ParseFlags(version, commit, date string) (*linterconfig.Config, []string, e
 	}
 
 	if state.showVersion {
-		printVersion(version, commit, date)
+		printVersion(version, commit, commitTime)
 		os.Exit(0)
 	}
 
@@ -59,7 +60,7 @@ func ParseFlags(version, commit, date string) (*linterconfig.Config, []string, e
 	}
 
 	if options.Version {
-		printVersion(version, commit, date)
+		printVersion(version, commit, commitTime)
 		os.Exit(0)
 	}
 
@@ -100,20 +101,13 @@ type flagState struct {
 	showVersion bool
 }
 
-func printVersion(version, commit, date string) {
-	versionString := version
-	if commit != "" {
-		if len(commit) > 7 {
-			commit = commit[:7]
-		}
-
-		versionString += fmt.Sprintf(" (%s)", commit)
-	}
-
-	fmt.Printf("retrogolint version %s\n", versionString)
-	if date != "" {
-		fmt.Printf("build date: %s\n", date)
-	}
+func printVersion(version, commit, commitTime string) {
+	metadata := buildinfo.Read(buildinfo.Options{
+		Version:    version,
+		Commit:     commit,
+		CommitTime: commitTime,
+	})
+	fmt.Print(buildinfo.FormatMultiline("retrogolint", metadata))
 }
 
 func buildFlagSet(cfg *linterconfig.Config,
